@@ -11,8 +11,9 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme: quartz_custom.scss
     css: styles.css
+    include-after-body: scroll_gradient.js
     toc: true
 
 editor: visual
