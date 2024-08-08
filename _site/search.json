@@ -2,9 +2,9 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "iandavis1937",
+    "title": "Hi,I’m Ian,",
     "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites.\n\n1 + 1\n\n[1] 2\n\n\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text\nSome text"
+    "text": "data scientist"
   },
   {
     "objectID": "about.html",
@@ -12,5 +12,40 @@
     "title": "About",
     "section": "",
     "text": "About this site\n\n1 + 1\n\n[1] 2"
+  },
+  {
+    "objectID": "index.html#check-this-out",
+    "href": "index.html#check-this-out",
+    "title": "Hi,I’m Ian,",
+    "section": "Check this out:",
+    "text": "Check this out:"
+  },
+  {
+    "objectID": "index.html#lorem-ipsum",
+    "href": "index.html#lorem-ipsum",
+    "title": "Hi,I’m Ian,",
+    "section": "Lorem ipsum",
+    "text": "Lorem ipsum"
+  },
+  {
+    "objectID": "index.html#does-car-traffic-lower-quality-of-life",
+    "href": "index.html#does-car-traffic-lower-quality-of-life",
+    "title": "Hi,I’m Ian,",
+    "section": "Does car traffic lower quality of life?",
+    "text": "Does car traffic lower quality of life?\nWork Sample"
+  },
+  {
+    "objectID": "index.html#work-sample-does-car-traffic-lower-quality-of-life",
+    "href": "index.html#work-sample-does-car-traffic-lower-quality-of-life",
+    "title": "Hi,I’m Ian,",
+    "section": "(Work Sample) Does car traffic lower quality of life?",
+    "text": "(Work Sample) Does car traffic lower quality of life?"
+  },
+  {
+    "objectID": "index.html#work-sample---does-car-traffic-lower-quality-of-life",
+    "href": "index.html#work-sample---does-car-traffic-lower-quality-of-life",
+    "title": "Hi,I’m Ian,",
+    "section": "Work Sample - Does car traffic lower quality of life?",
+    "text": "Work Sample - Does car traffic lower quality of life?"
   }
 ]

@@ -11,9 +11,15 @@ website:
 
 format:
   html:
+    page-layout: custom
+    grid:
+        sidebar-width: 300px
+        body-width: 900px
+        margin-width: 300px
+        gutter-width: 1.5rem
     theme: quartz_custom.scss
     css: styles.css
-    include-after-body: scroll_gradient.js
+    include-before-body: before_body.html
     toc: true
 
 editor: visual

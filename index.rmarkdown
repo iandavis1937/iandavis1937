@@ -7,7 +7,13 @@ title: "Hi,<br>I'm Ian,"
   <div class="flip-word" id="flipWord">data scientist</div>
 </div>
 ```
+
+
+
 <br>
+
+
+
 
 ```{=html}
 <div class="check-this-out-container">
@@ -22,6 +28,9 @@ title: "Hi,<br>I'm Ian,"
   </div>
 </div>
 ```
+
+
+
 <br>
 
 <br>
@@ -40,7 +49,19 @@ title: "Hi,<br>I'm Ian,"
 
 <br>
 
+
 ## Does car traffic lower quality of life?
 
 Work Sample
+
+
+
+
+```{r}
+#| label: shiny1
+
+library(pacman)
+p_load(shiny)
+shiny::runApp("shiny1")
+```
 

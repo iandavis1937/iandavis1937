@@ -79,6 +79,14 @@ $text-muted:                  rgba($white, .7) !default;
 
 $blockquote-footer-color:     $text-muted !default;
 
+// Additional Headings Settings
+
+$h1-font-size: calc(1.725rem + 1.25vw);
+
+h1 {
+  font-size: $h1-font-size;
+}
+
 // Tables
 
 $table-dark-bg:               $dark !default;
@@ -573,3 +581,181 @@ body {
   @include glass();
 }
 
+// Additional Elements
+
+// Flip board
+
+.flip-board {
+  display: flex;
+  justify-content: flex-start; /* Align items to the left horizontally */
+  align-items: flex-start;     /* Align items to the top vertically */
+  height: 100px;
+  text-align: flex-start;
+  font-size: $h1-font-size;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-weight: 600;
+  overflow: hidden;
+  border: 0px;
+  width: 800px;
+  margin: 0;
+  margin-top: 0px;
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+.flip-word {
+  display: inline-block;
+  animation: flip-animation 3s infinite;
+}
+
+@keyframes flip-animation {
+  0% {
+    transform: rotateX(0);
+  }
+  2% {
+    transform: rotateX(15deg);
+  }
+  4% {
+    transform: rotateX(30deg);
+  }
+  6% {
+    transform: rotateX(45deg);
+  }
+  8% {
+    transform: rotateX(60deg);
+  }
+  10% {
+    transform: rotateX(75deg);
+  }
+  12% {
+    transform: rotateX(90deg);
+  }
+  24% {
+    transform: rotateX(0);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+/* Arrow */
+.check-this-out-container {
+  position: relative;
+  display: inline-block;
+}
+.check-this-out {
+  display: block;
+}
+
+.arrow-container {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px; /* Width of the line */
+  height: 100px; /* Initial height of the arrow */
+}
+
+.line {
+  background-color: white;
+  border-radius: 5px; /* Make the line rounded */
+  transition: width 0.1s ease, height 0.1s ease;
+  position: relative;
+}
+
+.horizontal-line {
+  height: 5px; /* Height of the horizontal line */
+  width: 100px; /* Initial width of the horizontal line */
+  left: -79px;
+  bottom: -63px;
+}
+
+.horizontal-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 4px; /* Position the arrowhead at the end of the line */
+  width: 5px; /* Width of the arrowhead lines */
+  height: 20px;
+  background-color: white;
+  border-radius: 5px;
+  transform: rotate(45deg); /* Updated angle */
+  transform-origin: center center;
+}
+
+.horizontal-line::after::before,
+.horizontal-line::after::after {
+  content: '';
+  position: absolute;
+  top: 67.5px;
+  width: 5px; /* Width of the arrowhead lines */
+  height: 20px;
+  background-color: white;
+  border-radius: 5px;
+  transform-origin: bottom center;
+}
+
+.horizontal-line::after::before {
+  left: -2px;
+  transform: rotate(0deg);
+}
+
+.horizontal-line::after::after {
+  left: 2px;
+  transform: rotate(0deg);
+}
+
+.horizontal-line.hide-arrowhead::after {
+  display: none;
+}
+
+.vertical-line {
+  width: 5px; /* Width of the vertical line */
+  height: 0; /* Initial height of the vertical line */
+  position: absolute; /* Position relative to the arrow container */
+  top: 63px; /* Adjust this value to change the starting y position */
+  display: none; /* Initially hidden */
+}
+
+.vertical-line::after {
+  content: '';
+  position: absolute;
+  bottom: 0; /* Position the arrowhead at the bottom of the line */
+  left: 50%; /* Center the arrowhead horizontally */
+  transform: translateX(-50%) rotate(315deg); /* Adjust position and rotation */
+  width: 5px; /* Width of the arrowhead lines */
+  height: 20px;
+  background-color: white;
+  border-radius: 5px;
+  transform-origin: bottom center;
+}
+
+.vertical-line::after::before,
+.vertical-line::after::after {
+  content: '';
+  position: absolute;
+  width: 5px; /* Width of the arrowhead lines */
+  height: 20px;
+  background-color: white;
+  border-radius: 5px;
+  transform-origin: bottom center;
+}
+
+.vertical-line::after::before {
+  left: -2px;
+  transform: rotate(45deg);
+}
+
+.vertical-line::after::after {
+  left: 2px;
+  transform: rotate(-45deg);
+}
