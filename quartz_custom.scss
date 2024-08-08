@@ -55,9 +55,22 @@ $spacer: 2rem !default;
 $body-bg:                   $purple !default;
 $body-color:                $white !default;
 
+body {
+    color: $white; // Ensure body text is white
+}
+
 // Links
 
-$link-color:                              $white !default;
+$link-color:                $white !default;
+
+a {
+    color: $white; // Ensure links are white
+    text-decoration: none;
+}
+
+a:hover, a:active, a:visited {
+    color: $white; // Ensure hovered, active, and visited links are white
+}
 
 // Components
 
@@ -85,6 +98,15 @@ $h1-font-size: calc(1.725rem + 1.25vw);
 
 h1 {
   font-size: $h1-font-size;
+}
+
+#title-block-header {
+  margin-bottom: 0rem;
+  margin-left: 1rem;
+  margin-right: 4rem;
+  padding-bottom: 0rem;
+  padding-left: 2rem;
+  color: #fff; /* Change font color to white */
 }
 
 // Tables
@@ -146,6 +168,36 @@ $nav-tabs-link-active-border-color: $gray-300 $gray-300 $nav-tabs-link-active-bg
 $nav-pills-border-radius:           $border-radius-pill !default;
 $nav-pills-link-active-color:       $white !default;
 $nav-pills-link-active-bg:          $primary !default;
+
+#toc-title {
+    font-size: 1.25rem; /* Adjust the font size as needed */
+}
+
+#TOC {
+    padding: 30px; /* Adjust padding as needed */
+    position: absolute;
+    right: 0;
+    top: 175px; /* Adjust top position if needed */
+    color: #fff; 
+    background-color: rgba(255, 255, 255, .01);
+    border-left: 1px solid #ddd; /* Optional: border to separate from the content */
+    z-index: 100; /* Ensure it is above other content if needed */
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 768px) {
+    #TOC {
+        position: static;
+        padding: 10px;
+        border-left: none; /* Optional: remove border for smaller screens */
+        border-top: 1px solid #ddd; /* Optional: add top border for smaller screens */
+        color: #f8f9fa; /* Optional: change background color for smaller screens */
+    }
+}
+
+.h2 {
+  color: #fff; 
+}
 
 // Navbars
 
@@ -587,18 +639,21 @@ body {
 
 .flip-board {
   display: flex;
-  justify-content: flex-start; /* Align items to the left horizontally */
-  align-items: flex-start;     /* Align items to the top vertically */
+  /* justify-content: flex-start;  Align items to the left horizontally */
+  /* align-items: flex-start;      Align items to the top vertically */
   height: 100px;
   text-align: flex-start;
   font-size: $h1-font-size;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-weight: 600;
+  color: #fff;
   overflow: hidden;
   border: 0px;
   width: 800px;
-  margin: 0;
+  margin-left: 1rem;
   margin-top: 0px;
+  padding-left: 2rem;
+  padding-top: 0px;
 }
 
 @keyframes flip {
@@ -651,6 +706,8 @@ body {
 /* Arrow */
 .check-this-out-container {
   position: relative;
+  margin-left: 1rem;
+  padding-left: 2rem;
   display: inline-block;
 }
 .check-this-out {
@@ -676,7 +733,7 @@ body {
   height: 5px; /* Height of the horizontal line */
   width: 100px; /* Initial width of the horizontal line */
   left: -79px;
-  bottom: -63px;
+  bottom: -70px;
 }
 
 .horizontal-line::after {
@@ -722,7 +779,7 @@ body {
   width: 5px; /* Width of the vertical line */
   height: 0; /* Initial height of the vertical line */
   position: absolute; /* Position relative to the arrow container */
-  top: 63px; /* Adjust this value to change the starting y position */
+  top: 70px; /* Adjust this value to change the starting y position */
   display: none; /* Initially hidden */
 }
 

@@ -21,6 +21,8 @@ format:
     css: styles.css
     include-before-body: before_body.html
     toc: true
+    toc-depth: 6
+    toc-location: right
 
 editor: visual
 
