@@ -7,7 +7,9 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - cv.qmd
+
+conda-env: personalwebenv
 
 format:
   html:
@@ -18,11 +20,11 @@ format:
         margin-width: 300px
         gutter-width: 1.5rem
     theme: quartz_custom.scss
-    css: styles.css
+    fontcolor: "#fff"
     include-before-body: before_body.html
     toc: true
     toc-depth: 6
     toc-location: right
-
-editor: visual
+    
+editor: source
 

@@ -1,0 +1,827 @@
+---
+title: "Sandbox"
+---
+
+## Work Sample
+
+Subtitle
+
+<head>
+  <title>Current Traffic</title>
+  <meta name="viewport" content="initial-scale=1" />
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+    integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+  </script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" type="text/css" href="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/maps/maps.css" />
+  <link rel="stylesheet" type="text/css"
+    href="https://api.tomtom.com/maps-sdk-for-web/cdn/plugins/SearchBox/2.23.1//SearchBox.css" />
+  <link rel="stylesheet" type="text/css"
+    href="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/maps/css-styles/traffic-incidents.css" />
+  <link rel="stylesheet" type="text/css"
+    href="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/maps/css-styles/routing.css" />
+  <link rel="stylesheet" type="text/css"
+    href="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/maps/css-styles/poi.css" />
+  <link rel="stylesheet" type="text/css" href="traffic-tutorial-web-sdk/styles.css" />
+
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Map Container -->
+      <div class="map-container">
+        <!-- Sidebar -->
+        <div class="sidebar col-sm-4">
+          <div id="secondary-row" class="row">
+            <div class="col pt-3 label">
+              <span>Search your city</span>
+              <div id="search-panel-container" class="row">
+                <div id="search-panel" class="container-fluid pb-4"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row row-border">
+            <div class="col py-3 label">
+              <div class="row align-items-center pt-2">
+                <div class="col d-flex align-items-center">
+                  <img class="traffic-icon mr-2" src="traffic-tutorial-web-sdk/img/traffic-flow.png" alt="" />
+                  <label for="flow-toggle" class="traffic-text">Traffic flow</label>
+                </div>
+                <div class="col-sm-3 pt-2 text-right">
+                  <label class="switch">
+                    <input id="flow-toggle" type="checkbox" checked/>
+                    <span class="toggle round"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="row align-items-center pt-2">
+                <div class="col d-flex align-items-center">
+                  <img class="traffic-icon" src="traffic-tutorial-web-sdk/img/traffic_lights.png" alt="" />
+                  <label for="incidents-toggle" class="traffic-text"> Incidents</label>
+                </div>
+                <div class="col-sm-3 pt-2 text-right">
+                  <label class="switch">
+                    <input id="incidents-toggle" type="checkbox" checked/>
+                    <span class="toggle round"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="incident-list-wrapper" class="row pt-0">
+            <div class="col">
+              <div id="incident-list-container" class="p-0">
+                <div class="list-group" id="incident-list">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="last-row" class="row mt-2 pt-4 row-border">
+            <div class="col">
+              <div class="row pt-4">
+                <div class="col">
+                  <label class="app-info-text"><a href="" data-toggle="modal" data-target="#help-modal">Map
+                    info</a></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Map -->
+      <div class="col" id="map"></div>
+      <div id="popup-wrapper">
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="help-modal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <img class="img-fluid" src="traffic-tutorial-web-sdk/img/logo.png" />
+          <button id="modal-close-button" type="button" class="btn close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">
+              <img src="traffic-tutorial-web-sdk/img/close.png" alt=&times;>
+            </span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img class="img-fluid" src="traffic-tutorial-web-sdk/img/layers.png" />
+          <h2>Traffic map</h2>
+             Adapted from the TomTom DevRel Team <br /><br /></span>
+
+          <button id="lets-start-button"
+            onclick="window.open('https://developer.tomtom.com/maps-sdk-web-js/tutorials-use-cases/traffic-tutorial')"
+            class="btn shadow responsive-text" data-dismiss="modal">
+            Text
+          </button>
+          <button id="github-button"
+            onclick="window.open('https://github.com/tomtom-international/traffic-tutorial-web-sdk')"
+            class="btn shadow responsive-text">
+            <i class="fa fa-github"></i> GITHUB
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.1/bootstrap-slider.min.js"></script>
+  <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/maps/maps-web.min.js"></script>
+  <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.57.0/services/services-web.min.js"></script>
+  <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/plugins/SearchBox/2.23.1/SearchBox-web.js"></script>
+
+  <script src="traffic-tutorial-web-sdk/traffic.js"></script>
+</body>
+
+</html>
+
+### Traffic Information
+
+<div id="traffic-info"></div>
+
+<br>
+
+<br>
+
+```{r}
+#| include: false
+#| echo: false
+
+# Load R package manager
+if (!requireNamespace("pacman", quietly = FALSE)) {
+    install.packages("pacman")
+    library(pacman)
+}
+
+# Load reticulate
+if (!requireNamespace("reticulate", quietly = FALSE)) {
+    pacman::p_load(reticulate)
+}
+
+library(reticulate)
+# Use a specific conda environment
+use_condaenv("personalwebenv", required = TRUE)
+py_config()
+
+```
+
+```{python}
+#| echo: false
+#| include: false
+
+import sys
+
+# Print the directories that Python searches for modules
+print("Python module search paths:")
+for path in sys.path:
+    print(path)
+```
+
+```{python}
+#| echo: false
+#| include: false
+
+import importlib
+import subprocess
+import sys
+
+def check_install_local(package, conda_package='personalwebenv'):
+    try:
+        # Try importing the package
+        importlib.import_module(package)
+    except ImportError:
+        print(f"{package} not found. Attempting to install...")
+        try:
+            # Attempt to install via conda first
+            subprocess.check_call([sys.executable, '-m', 'conda', 'install', conda_package or package, '-y'])
+        except Exception as e:
+            print(f"Conda installation failed: {e}.")
+
+check_install_local('matplotlib')
+check_install_local('pandas')
+check_install_local('geopandas')
+check_install_local('census', 'census')
+check_install_local('us', 'us')
+```
+
+```{python}
+#| eval: false
+#| include: false
+
+import requests
+import pandas as pd
+
+def fetch_311_data():
+    url = "https://phl.carto.com/api/v2/sql"
+    query = "SELECT * FROM public_cases_fc WHERE requested_datetime >= current_date - 14"
+    params = {"q": query}
+
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data['rows'])
+        return df
+    else:
+        response.raise_for_status()
+
+data311 = fetch_311_data()
+data311.head()
+```
+
+```{python}
+#| eval: false
+#| include: false
+
+import requests
+import pandas as pd
+
+def fetch_311_data():
+    url = "https://phl.carto.com/api/v2/sql"
+    query = "SELECT * FROM public_cases_fc WHERE requested_datetime >= current_date - 365"
+    params = {"q": query}
+
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data['rows'])
+        return df
+    else:
+        response.raise_for_status()
+
+data311 = fetch_311_data()
+data311.head()
+```
+
+```{python}
+#| eval: false
+#| include: false
+
+# Obtain Census variables from the 2022 ACS at the tract level for Philadelphia County
+# (FIPS code: 42101)
+# C17002_001E: count of ratio of income to poverty in the past 12 months (total)
+# C17002_002E: count of ratio of income to poverty in the past 12 months (< 0.50)
+# C17002_003E: count of ratio of income to poverty in the past 12 months (0.50 - 0.99)
+# B01003_001E: total population
+# Sources: https://api.census.gov/data/2019/acs/acs1/variables.html; https://pypi.org/project/census/
+# https://pygis.io/docs/d_access_census.html
+
+# Variables
+# Sex
+# B01001_001E Sex Total (Denominator)
+# B01001_002E Male
+# B01001_026E Female
+# Age
+# B01002_001E	Median Age
+# Total pop.
+# B01003_001E	Total Population
+# Race & Ethnicity
+# B02001_001E	Race Total (Denominator)
+# B02001_002E White alone
+# B02001_003E Black or AA alone
+# B02001_004E	American Indian and Alaska Native alone
+# B02001_005E	Asian alone
+# B02001_006E	Native Hawaiian and Other Pacific Islander alone
+# B02001_007E	Some Other Race alone
+# B02001_008E	Two or More Races:
+# B02001_009E	Two races including Some Other Race
+# B02001_010E	Two or More Races:Two races excluding Some Other Race, and three or more races
+# B03002_001E	Total Hispanic or Latino Origin by Race (Denominator)
+# B03002_002E	Not Hispanic or Latino
+# B03002_012E	Total Hispanic or Latino
+# B03002_013E	Hispanic or Latino:White alone
+# B03002_014E	Hispanic or Latino:Black or African American alone
+# B03002_015E	Hispanic or Latino:American Indian and Alaska Native alone
+# B03002_016E	Hispanic or Latino:Asian alone
+# B03002_017E	Hispanic or Latino:Native Hawaiian and Other Pacific Islander alone
+# B03002_018E	Hispanic or Latino:Some other race alone
+# B03002_019E	Hispanic or Latino:Two or more races:
+# B03002_020E	Hispanic or Latino:Two or more races: Two races including Some other race
+# B03002_021E	Hispanic or Latino:Two or more races: Two races excluding Some other race, and three or more races
+# B03001_001E	Total:Hispanic or Latino Origin by Specific Origin
+# B03001_004E	Hispanic or Latino:Mexican
+# B03001_005E	Hispanic or Latino:Puerto Rican
+# B03001_006E	Hispanic or Latino:Cuban
+# B03001_007E	Hispanic or Latino:Dominican (Dominican Republic)
+# B03001_008E	Hispanic or Latino:Central American:
+# B03001_017E	Hispanic or Latino:South American:Argentinean
+# B03001_018E	Hispanic or Latino:South American:Bolivian
+# B03001_019E	Hispanic or Latino:South American:Chilean
+# B03001_020E	Hispanic or Latino:South American:Colombian
+# B03001_021E	Hispanic or Latino:South American:Ecuadorian
+# B03001_022E	Hispanic or Latino:South American:Paraguayan
+# B03001_023E	Hispanic or Latino:South American:Peruvian
+# B03001_024E	Hispanic or Latino:South American:Uruguayan
+# B03001_025E	Hispanic or Latino:South American:Venezuelan
+# B03001_026E	Hispanic or Latino:South American:Other South American
+# B03001_028E	Hispanic or Latino:Other Hispanic or Latino:Spaniard
+# B03001_029E	Hispanic or Latino:Other Hispanic or Latino:Spanish
+# B03001_031E	Hispanic or Latino:Other Hispanic or Latino:All other Hispanic or Latino
+# B04004_001E	EstimateTotal:	People Reporting Single Ancestry
+# B04004_002E	Afghan	People Reporting Single Ancestry
+# B04004_003E	Albanian	People Reporting Single Ancestry
+# B04004_004E	Alsatian	People Reporting Single Ancestry
+# B04004_005E	American	People Reporting Single Ancestry
+# B04004_006E	Arab:	People Reporting Single Ancestry
+# B04004_007E	Arab:Egyptian	People Reporting Single Ancestry
+# B04004_008E	Arab:Iraqi	People Reporting Single Ancestry
+# B04004_009E	Arab:Jordanian	People Reporting Single Ancestry
+# B04004_010E	Arab:Lebanese	People Reporting Single Ancestry
+# B04004_011E	Arab:Moroccan	People Reporting Single Ancestry
+# B04004_012E	Arab:Palestinian	People Reporting Single Ancestry
+# B04004_013E	Arab:Syrian	People Reporting Single Ancestry
+# B04004_014E	Arab:Arab	People Reporting Single Ancestry
+# B04004_015E	Arab:Other Arab	People Reporting Single Ancestry
+# B04004_016E	Armenian	People Reporting Single Ancestry
+# B04004_017E	Assyrian/Chaldean/Syriac	People Reporting Single Ancestry
+# B04004_018E	Australian	People Reporting Single Ancestry
+# B04004_019E	Austrian	People Reporting Single Ancestry
+# B04004_020E	Basque	People Reporting Single Ancestry
+# B04004_021E	Belgian	People Reporting Single Ancestry
+# B04004_022E	Brazilian	People Reporting Single Ancestry
+# B04004_023E	British	People Reporting Single Ancestry
+# B04004_024E	Bulgarian	People Reporting Single Ancestry
+# B04004_025E	Cajun	People Reporting Single Ancestry
+# B04004_026E	Canadian	People Reporting Single Ancestry
+# B04004_027E	Carpatho Rusyn	People Reporting Single Ancestry
+# B04004_028E	Celtic	People Reporting Single Ancestry
+# B04004_029E	Croatian	People Reporting Single Ancestry
+# B04004_030E	Cypriot	People Reporting Single Ancestry
+# B04004_031E	Czech	People Reporting Single Ancestry
+# B04004_032E	Czechoslovakian	People Reporting Single Ancestry
+# B04004_033E	Danish	People Reporting Single Ancestry
+# B04004_034E	Dutch	People Reporting Single Ancestry
+# B04004_035E	Eastern European	People Reporting Single Ancestry
+# B04004_036E	English	People Reporting Single Ancestry
+# B04004_037E	Estonian	People Reporting Single Ancestry
+# B04004_038E	European	People Reporting Single Ancestry
+# B04004_039E	Finnish	People Reporting Single Ancestry
+# B04004_040E	French (except Basque)	People Reporting Single Ancestry
+# B04004_041E	French Canadian	People Reporting Single Ancestry
+# B04004_042E	German	People Reporting Single Ancestry
+# B04004_043E	German Russian	People Reporting Single Ancestry
+# B04004_044E	Greek	People Reporting Single Ancestry
+# B04004_045E	Guyanese	People Reporting Single Ancestry
+# B04004_046E	Hungarian	People Reporting Single Ancestry
+# B04004_047E	Icelander	People Reporting Single Ancestry
+# B04004_048E	Iranian	People Reporting Single Ancestry
+# B04004_049E	Irish	People Reporting Single Ancestry
+# B04004_050E	Israeli	People Reporting Single Ancestry
+# B04004_051E	Italian	People Reporting Single Ancestry
+# B04004_052E	Latvian	People Reporting Single Ancestry
+# B04004_053E	Lithuanian	People Reporting Single Ancestry
+# B04004_054E	Luxembourger	People Reporting Single Ancestry
+# B04004_055E	Macedonian	People Reporting Single Ancestry
+# B04004_056E	Maltese	People Reporting Single Ancestry
+# B04004_057E	New Zealander	People Reporting Single Ancestry
+# B04004_058E	Northern European	People Reporting Single Ancestry
+# B04004_059E	Norwegian	People Reporting Single Ancestry
+# B04004_060E	Pennsylvania German	People Reporting Single Ancestry
+# B04004_061E	Polish	People Reporting Single Ancestry
+# B04004_062E	Portuguese	People Reporting Single Ancestry
+# B04004_063E	Romanian	People Reporting Single Ancestry
+# B04004_064E	Russian	People Reporting Single Ancestry
+# B04004_065E	Scandinavian	People Reporting Single Ancestry
+# B04004_066E	Scotch-Irish	People Reporting Single Ancestry
+# B04004_067E	Scottish	People Reporting Single Ancestry
+# B04004_068E	Serbian	People Reporting Single Ancestry
+# B04004_069E	Slavic	People Reporting Single Ancestry
+# B04004_070E	Slovak	People Reporting Single Ancestry
+# B04004_071E	Slovene	People Reporting Single Ancestry
+# B04004_072E	Soviet Union	People Reporting Single Ancestry
+# B04004_073E	Subsaharan African:	People Reporting Single Ancestry
+# B04004_074E	Subsaharan African:Cape Verdean	People Reporting Single Ancestry
+# B04004_075E	Subsaharan African:Ethiopian	People Reporting Single Ancestry
+# B04004_076E	Subsaharan African:Ghanaian	People Reporting Single Ancestry
+# B04004_077E	Subsaharan African:Kenyan	People Reporting Single Ancestry
+# B04004_078E	Subsaharan African:Liberian	People Reporting Single Ancestry
+# B04004_079E	Subsaharan African:Nigerian	People Reporting Single Ancestry
+# B04004_080E	Subsaharan African:Senegalese	People Reporting Single Ancestry
+# B04004_081E	Subsaharan African:Sierra Leonean	People Reporting Single Ancestry
+# B04004_082E	Subsaharan African:Somali	People Reporting Single Ancestry
+# B04004_083E	Subsaharan African:South African	People Reporting Single Ancestry
+# B04004_084E	Subsaharan African:Sudanese	People Reporting Single Ancestry
+# B04004_085E	Subsaharan African:Ugandan	People Reporting Single Ancestry
+# B04004_086E	Subsaharan African:Zimbabwean	People Reporting Single Ancestry
+# B04004_087E	Subsaharan African:African	People Reporting Single Ancestry
+# B04004_088E	Subsaharan African:Other Subsaharan African	People Reporting Single Ancestry
+# B04004_089E	Swedish	People Reporting Single Ancestry
+# B04004_090E	Swiss	People Reporting Single Ancestry
+# B04004_091E	Turkish	People Reporting Single Ancestry
+# B04004_092E	Ukrainian	People Reporting Single Ancestry
+# B04004_093E	Welsh	People Reporting Single Ancestry
+# B04004_094E	West Indian (except Hispanic groups):	People Reporting Single Ancestry
+# B04004_095E	West Indian (except Hispanic groups):Bahamian	People Reporting Single Ancestry
+# B04004_096E	West Indian (except Hispanic groups):Barbadian	People Reporting Single Ancestry
+# B04004_097E	West Indian (except Hispanic groups):Belizean	People Reporting Single Ancestry
+# B04004_098E	West Indian (except Hispanic groups):Bermudan	People Reporting Single Ancestry
+# B04004_099E	West Indian (except Hispanic groups):British West Indian	People Reporting Single Ancestry
+# B04004_100E	West Indian (except Hispanic groups):Dutch West Indian	People Reporting Single Ancestry
+# B04004_101E	West Indian (except Hispanic groups):Haitian	People Reporting Single Ancestry
+# B04004_102E	West Indian (except Hispanic groups):Jamaican	People Reporting Single Ancestry
+# B04004_103E	West Indian (except Hispanic groups):Trinidadian and Tobagonian	People Reporting Single Ancestry
+# B04004_104E	West Indian (except Hispanic groups):U.S. Virgin Islander	People Reporting Single Ancestry
+# B04004_105E	West Indian (except Hispanic groups):West Indian	People Reporting Single Ancestry
+# B04004_106E	West Indian (except Hispanic groups):Other West Indian	People Reporting Single Ancestry
+# B04004_107E	Yugoslavian	People Reporting Single Ancestry
+# B04004_108E	Other groups	People Reporting Single Ancestry
+# B04007_003E	Ancestry specified:Single ancestry	Ancestry
+# B04007_004E	Ancestry specified:Multiple ancestry	Ancestry
+# Immigration Status
+# B05001_001E		Nativity and Citizenship Status in the United States
+# B05001_002E	U.S. citizen, born in the United States	Nativity and Citizenship Status in the United States
+# B05001_003E	U.S. citizen, born in Puerto Rico or U.S. Island Areas	Nativity and Citizenship Status in the United States
+# B05001_004E	U.S. citizen, born abroad of American parent(s)	Nativity and Citizenship Status in the United States
+# B05001_005E	U.S. citizen by naturalization	Nativity and Citizenship Status in the United States
+# B05001_006E	Not a U.S. citizen	Nativity and Citizenship Status in the United States
+# B05005_001E		Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_002E	Entered 2010 or later:	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_003E	Entered 2010 or later:Native	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_004E	Entered 2010 or later:Foreign born:	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_005E	Entered 2010 or later:Foreign born:Naturalized U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_006E	Entered 2010 or later:Foreign born:Not a U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_007E	Entered 2000 to 2009:	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_008E	Entered 2000 to 2009:Native	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_009E	Entered 2000 to 2009:Foreign born:	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_010E	Entered 2000 to 2009:Foreign born:Naturalized U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_011E	Entered 2000 to 2009:Foreign born:Not a U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States
+# B05005_012E	Entered 1990 to 1999:	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_013E	Entered 1990 to 1999:Native	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_014E	Entered 1990 to 1999:Foreign born:	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_015E	Entered 1990 to 1999:Foreign born:Naturalized U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_016E	Entered 1990 to 1999:Foreign born:Not a U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_017E	Entered before 1990:	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_018E	Entered before 1990:Native	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_019E	Entered before 1990:Foreign born:	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_020E	Entered before 1990:Foreign born:Naturalized U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States			
+# B05005_021E	Entered before 1990:Foreign born:Not a U.S. citizen	Period of Entry by Nativity and Citizenship Status in the United States			
+# B06008_001E	Total:Place of Birth by Marital Status in the United States
+# B06008_002E	Never married	Place of Birth by Marital Status in the United States
+# B06008_003E	Now married, except separated	Place of Birth by Marital Status in the United States
+# B06008_004E	Divorced	Place of Birth by Marital Status in the United States
+# B06008_005E	Separated	Place of Birth by Marital Status in the United States
+# B06008_006E	Widowed	Place of Birth by Marital Status in the United States
+# B06008_007E	Born in state of residence:	Place of Birth by Marital Status in the United States
+# B06008_013E	Born in other state in the United States:
+# B06008_019E	Native; born outside the United States:
+# B06008_025E	Foreign born:
+# B07003_001E	Total:Geographical Mobility in the Past Year by Sex for Current Residence in the United States
+# B07003_004E	Same house 1 year ago:	
+# B07003_007E	Moved within same county:	
+# B07003_010E	Moved from different county within same state:
+# B07003_013E	Moved from different state:
+# B07003_016E	Moved from abroad:
+# B08006_001E	Total:	Sex of Workers by Means of Transportation to Work
+# B08006_002E	Car, truck, or van:
+# B08006_003E	Car, truck, or van:Drove alone
+# B08006_004E	Car, truck, or van:Carpooled:
+# B08006_005E	Car, truck, or van:Carpooled:In 2-person carpool
+# B08006_006E	Car, truck, or van:Carpooled:In 3-person carpool
+# B08006_007E	Car, truck, or van:Carpooled:In 4-or-more-person carpool
+# B08006_008E	Public transportation (excluding taxicab):
+# B08006_009E	Public transportation (excluding taxicab):Bus
+# B08006_010E	Public transportation (excluding taxicab):Subway or elevated rail
+# B08006_011E	Public transportation (excluding taxicab):Long-distance train or commuter rail
+# B08006_012E	Public transportation (excluding taxicab):Light rail, streetcar or trolley (carro público in Puerto Rico)
+# B08006_013E	Public transportation (excluding taxicab):Ferryboat
+# B08006_014E	Bicycle
+# B08006_015E	Walked
+# B08006_016E	Taxicab, motorcycle, or other means
+# B08006_017E	Worked from home
+# B08007_002E	Worked in state of residence:
+# B08007_003E	Worked in state of residence:Worked in county of residence
+# B08007_004E	Worked in state of residence:Worked outside county of residence
+# B08007_005E	Worked outside state of residence
+# B08011_002E	12:00 a.m. to 4:59 a.m.
+# B08011_003E	5:00 a.m. to 5:29 a.m.
+# B08011_004E	5:30 a.m. to 5:59 a.m.
+# B08011_005E	6:00 a.m. to 6:29 a.m.
+# B08011_006E	6:30 a.m. to 6:59 a.m.
+# B08011_007E	7:00 a.m. to 7:29 a.m.
+# B08011_008E	7:30 a.m. to 7:59 a.m.
+# B08011_009E	8:00 a.m. to 8:29 a.m.
+# B08011_010E	8:30 a.m. to 8:59 a.m.
+# B08011_011E	9:00 a.m. to 9:59 a.m.
+# B08011_012E	10:00 a.m. to 10:59 a.m.
+# B08011_013E	11:00 a.m. to 11:59 a.m.
+# B08011_014E	12:00 p.m. to 3:59 p.m.
+# B08011_015E	4:00 p.m. to 11:59 p.m.
+# B08013_001E	EstimateAggregate travel time to work (in minutes):
+# B08015_001E	EstimateAggregate number of vehicles (car, truck, or van) used in commuting:
+# B08016_003E	Living in a principal city:Worked in Metropolitan Statistical Area of residence:
+# B08016_004E	Living in a principal city:Worked in Metropolitan Statistical Area of residence:Worked in a principal city
+# B08016_005E	Living in a principal city:Worked in Metropolitan Statistical Area of residence:Worked outside any principal city
+# B08016_006E	Living in a principal city:Worked in a different Metropolitan Statistical Area:
+# B08016_007E	Living in a principal city:Worked in a different Metropolitan Statistical Area:Worked in a principal city
+# B08016_008E	Living in a principal city:Worked in a different Metropolitan Statistical Area:Worked outside any principal city
+# B08016_009E	Living in a principal city:Worked in a Micropolitan Statistical Area:
+# B08016_010E	Living in a principal city:Worked in a Micropolitan Statistical Area:Worked in a principal city
+# B08016_011E	Living in a principal city:Worked in a Micropolitan Statistical Area:Worked outside any principal city
+# B08016_012E	Living in a principal city:Worked outside any Metropolitan or Micropolitan Statistical Area
+# B08016_013E	Living outside any principal city:
+# B08016_014E	Living outside any principal city:Worked in Metropolitan Statistical Area of residence:
+# B08016_015E	Living outside any principal city:Worked in Metropolitan Statistical Area of residence:Worked in a principal city
+# B08016_016E	Living outside any principal city:Worked in Metropolitan Statistical Area of residence:Worked outside any principal city
+# B08016_017E	Living outside any principal city:Worked in a different Metropolitan Statistical Area:
+# B08016_018E	Living outside any principal city:Worked in a different Metropolitan Statistical Area:Worked in a principal city
+# B08016_019E	Living outside any principal city:Worked in a different Metropolitan Statistical Area:Worked outside any principal city
+# B08016_020E	Living outside any principal city:Worked in a Micropolitan Statistical Area:
+# B08016_021E	Living outside any principal city:Worked in a Micropolitan Statistical Area:Worked in a principal city
+# B08016_022E	Living outside any principal city:Worked in a Micropolitan Statistical Area:Worked outside any principal city
+# B08016_023E	Living outside any principal city:Worked outside any Metropolitan or Micropolitan Statistical Area
+
+
+# Household Size by Number of Workers in Household
+
+# B19001	Household Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B19013	Median Household Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B19051	Earnings in the Past 12 Months for Households
+# B19052	Wage or Salary Income in the Past 12 Months for Households
+# B19058	Public Assistance Income or Food Stamps/SNAP in the Past 12 Months for Households
+# B17026_001E	EstimateTotal:	Ratio of Income to Poverty Level of Families in the Past 12 Months
+# B19083	Gini Index of Income Inequality
+# B19101	Family Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B19113	Median Family Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B19121	Median Family Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) by Number of Earners in Family
+# B19301	Per Capita Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B23025	Employment Status for the Population 16 Years and Over
+# B24011	Occupation by Median Earnings in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) for the Civilian Employed Population 16 Years and Over
+# B24031	Industry by Median Earnings in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) for the Civilian Employed Population 16 Years and Over
+# B24081	Class of Worker by Median Earnings in the Past 12 Months (in 2022 Inflation-Adjusted Dollars) for the Civilian Employed Population 16 Years and Over
+# B24114	Detailed Occupation for the Civilian Employed Population 16 Years and Over
+# B24134	Detailed Industry for the Civilian Employed Population 16 Years and Over
+# B25001	Housing Units
+# B25002	Occupancy Status
+# B25003	Tenure
+# B25004	Vacancy Status
+# B25008	Total Population in Occupied Housing Units by Tenure
+# B25017	Rooms
+# B25018	Median Number of Rooms
+# B25024	Units in Structure
+# B25031	Median Gross Rent by Bedrooms
+# B25034	Year Structure Built
+# B25035	Median Year Structure Built
+# B25040	House Heating Fuel
+# B25041	Bedrooms
+# B25047	Plumbing Facilities for All Housing Units
+# B25048	Plumbing Facilities for Occupied Housing Units
+# B25051	Kitchen Facilities for All Housing Units
+# B25052	Kitchen Facilities for Occupied Housing Units
+# B25056	Contract Rent
+# B25058	Median Contract Rent (Dollars)
+# B25063	Gross Rent
+# B25064	Median Gross Rent (Dollars)
+# B25070	Gross Rent as a Percentage of Household Income in the Past 12 Months
+# B25140	Housing Costs as a Percentage of Household Income in the Past 12 Months
+# B25075	Value
+# B25077	Median Value (Dollars)
+# B25081	Mortgage Status
+# B25087	Mortgage Status and Selected Monthly Owner Costs
+# B25104	Monthly Housing Costs	
+# B25105	Median Monthly Housing Costs (Dollars)
+# B25113	Median Gross Rent by Year Householder Moved Into Unit
+# B25132	Monthly Electricity Costs
+# B25133	Monthly Gas Costs
+# B25134	Annual Water and Sewer Costs
+# B25135	Annual Other Fuel Costs
+# B25138	Lower Gross Rent Quartile (Dollars)	
+# B25139	Upper Gross Rent Quartile (Dollars)
+# B26001	Group Quarters Population
+# B26103	Group Quarters Type (3 Types)
+# B27011	Health Insurance Coverage Status and Type by Employment Status
+# B27015	Health Insurance Coverage Status and Type by Household Income in the Past 12 Months (in 2022 Inflation-Adjusted Dollars)
+# B28001	Types of Computers in Household	
+# B28002	Presence and Types of Internet Subscriptions in Household	
+# B28003	Presence of a Computer and Type of Internet Subscription in Household
+# B28010	Computers in Household
+# B28011	Internet Subscriptions in Household
+# B29003	Citizen, Voting-Age Population by Poverty Status
+# B98001	Unweighted Housing Unit Sample
+# B98002	Unweighted Group Quarters Population Sample
+# B98003	Unweighted Total Population Sample
+# B98011	Housing Unit Coverage Rate
+# B98021	Housing Unit Response and Nonresponse Rates With Reasons for Noninterviews
+# B98022	Group Quarters Population Response and Nonresponse Rates With Reasons for Noninterviews
+# B98031	Overall Person Characteristic Allocation Rate
+# B98032	Overall Housing Unit Characteristic Allocation Rate
+# B99011	Allocation of Sex
+# B99012	Allocation of Age
+# B99021	Allocation of Race
+# B99031	Allocation of Hispanic or Latino Origin
+# B99051	Allocation of Citizenship Status
+# B99052	Allocation of Year of Entry
+# B99052PR	Allocation of Year of Entry for Population Born Outside Puerto Rico
+# B99053	Allocation of Year of Naturalization
+# B99061	Allocation of Place of Birth
+# B99071	Allocation of Mobility Status for the Population 1 Year and Over
+# B99072	Allocation of Residence 1 Year Ago for the Population 1 Year and Over
+# B99080	Allocation of Means of Transportation to Work
+# B99081	Allocation of Place of Work
+# B99082	Allocation of Private Vehicle Occupancy
+# B99083	Allocation of Time of Departure to Go to Work
+# B99084	Allocation of Travel Time to Work
+# B99085	Allocation of Vehicles Available for Workers
+# B99086	Allocation of Means of Transportation to Work for Workplace Geography
+# B99087	Allocation of Time Arriving at Work From Home for Workplace Geography
+# B99088	Allocation of Travel Time to Work for Workplace Geography
+# B99089	Allocation of Vehicles Available for Workers for Workplace Geography
+# B99092	Allocation of Relationship
+# B99103	Allocation of Grandparents Responsible for Grandchildren Under 18 Years
+# B99121	Allocation of Marital Status for the Population 15 Years and Over
+# B99122	Allocation of Divorced in the Past 12 Months for the Population 15 Years and Over
+# B99123	Allocation of Married in the Past 12 Months for the Population 15 Years and Over
+# B99124	Allocation of Widowed in the Past 12 Months for the Population 15 Years and Over
+# B99125	Allocation of Times Married for the Population 15 Years and Over
+# B99126	Allocation of Year Last Married for the Population 15 Years and Over
+# B99132	Allocation of Fertility of Women 15 to 50 Years
+# B99141	Allocation of School Enrollment for the Population 3 Years and Over
+# B99142	Allocation of Grade Enrolled for the Population 3 Years and Over Enrolled in School
+# B99151	Allocation of Educational Attainment for the Population 25 Years and Over
+# B99152	Allocation of Field of Degree for the Population 25 Years and Over
+# B99161	Allocation of Language Status for the Population 5 Years and Over
+# B99162	Allocation of Language Spoken at Home for the Population 5 Years and Over
+# B99163	Allocation of Ability to Speak English for the Population 5 Years and Over
+# B99171	Allocation of Poverty Status in the Past 12 Months for Unrelated Individuals
+# B99172	Allocation of Poverty Status in the Past 12 Months for Families
+# B99181	Allocation of Disability Items for the Civilian Noninstitutionalized Population
+# B99182	Allocation of Hearing Difficulty for the Civilian Noninstitutionalized Population
+# B99183	Allocation of Vision Difficulty for the Civilian Noninstitutionalized Population
+# B99184	Allocation of Cognitive Difficulty for the Civilian Noninstitutionalized Population 5 Years and Over
+# B99185	Allocation of Ambulatory Difficulty for the Civilian Noninstitutionalized Population 5 Years and Over
+# B99186	Allocation of Self-Care Difficulty for the Civilian Noninstitutionalized Population 5 Years and Over
+# B99187	Age by Allocation of Independent Living Difficulty for the Civilian Noninstitutionalized Population 15 Years and Over
+# B99191	Allocation of Individuals' Income in the Past 12 Months for the Population 15 Years and Over - Percent of Income Allocated
+# B99192	Allocation of Household Income in the Past 12 Months - Percent of Income Allocated
+# B99193	Allocation of Family Income in the Past 12 Months -- Percent of Income Allocated
+# B99194	Allocation of Nonfamily Household Income in the Past 12 Months -- Percent of Income Allocated
+# B99201	Allocation of Earnings in the Past 12 Months for the Population 16 Years and Over - Percent of Earnings Allocated
+# B99211	Allocation of Veteran Status for the Population 18 Years and Over
+# B99212	Allocation of Period of Military Service for Civilian Veterans 18 Years and Over
+# B99221	Allocation of Food Stamps/SNAP Receipt
+# B99231	Allocation of Employment Status for the Population 16 Years and Over
+# B99232	Allocation of Work Status in the Past 12 Months for the Population 16 Years and Over
+# B99233	Allocation of Usual Hours Worked per Week in the Past 12 Months for the Population 16 Years and Over
+# B99234	Allocation of Weeks Worked in the Past 12 Months for the Population 16 Years and Over
+# B99241	Allocation of Industry for the Civilian Employed Population 16 Years and Over
+# B99242	Allocation of Occupation for the Civilian Employed Population 16 Years and Over
+# B99243	Allocation of Class of Worker for the Civilian Employed Population 16 Years and Over
+# B99244	Allocation of Industry for the Full-Time, Year-Round Civilian Employed Population 16 Years and Over
+# B99245	Allocation of Occupation for the Full-Time, Year-Round Civilian Employed Population 16 Years and Over
+# B99246	Allocation of Class of Worker for the Full-Time, Year-Round Civilian Employed Population 16 Years and Over
+# B992510	Allocation of Kitchen Facilities
+# B992511	Allocation of House Heating Fuel
+# B992512	Allocation of Vehicles Available
+# B992513	Allocation of Telephone Service Available
+# B992514	Allocation of Meals Included in Rent
+# B992515	Allocation of Contract Rent
+# B992516	Allocation of Rent Asked
+# B992518	Allocation of Gross Rent
+# B992519	Allocation of Value
+# B99252	Allocation of Tenure
+# B992520	Allocation of Price Asked
+# B992521	Allocation of Mortgage Status
+# B992522	Allocation of Mortgage Status and Selected Monthly Owner Costs
+# B992523	Allocation of Selected Monthly Owner Costs for Owner-Occupied Housing Units
+# B99253	Allocation of Vacancy Status
+# B99254	Allocation of Rooms
+# B99255	Allocation of Units in Structure
+# B99256	Allocation of Year Structure Built
+# B99257	Allocation of Year Householder Moved Into Unit
+# B99258	Allocation of Bedrooms
+# B99259	Allocation of Plumbing Facilities
+# B992701	Allocation of Health Insurance Coverage
+# B992702	Allocation of Private Health Insurance
+# B992703	Allocation of Public Health Insurance
+# B992704	Allocation of Employer-Based Health Insurance
+# B992705	Allocation of Direct-Purchase Health Insurance
+# B992706	Allocation of Medicare Coverage
+# B992707	Allocation of Medicaid/Means-Tested Public Coverage
+# B992708	Allocation of TRICARE/Military Health Coverage
+# B992709	Allocation of VA Health Care
+# B99281	Allocation of Household Internet Access
+# B99282	Allocation of Household Computer Type
+# B99283	Allocation of Household Internet Subscription Type
+# C02003	Detailed Race
+# C02015	Asian Alone by Selected Groups
+# C02016	Native Hawaiian and Other Pacific Islander Alone by Selected Groups
+# C15010	Field of Bachelor's Degree for First Major for the Population 25 Years and Over
+# C16001	Language Spoken at Home for the Population 5 Years and Over
+# C16002	Household Language by Household Limited English Speaking Status
+# C17002	Ratio of Income to Poverty Level in the Past 12 Months
+# C18108	Age by Number of Disabilities
+```
+
+```{python}
+#| eval: false
+#| include: false
+
+# Import modules
+import matplotlib.pyplot as plt
+import pandas as pd
+import geopandas as gpd
+from census import Census
+from us import states
+import os
+
+# Set API key
+c = Census("2addc1e222722ee4913ac6dfa920676578e7f90d")
+
+phl_census = c.acs5.state_county_tract(
+  fields = ('NAME', 'GEO_ID', 'B01001_001E'),#, 'B19001_001E', 'B19013_001E', 'B17026_001E',
+            #'C17002_002E', 'C17002_003E', 'B01003_001E'),
+  state_fips = "42",
+  county_fips = "101",
+  tract = "*",
+  year = 2022)
+  
+phl_census_df = pd.DataFrame(phl_census)
+phl_census_df.head(2)
+```
+
+```{python}
+#| eval: false
+#| include: false
+
+import requests
+import pandas as pd
+
+def fetch_acs_agg_data():
+    # Define the base URL for the ACS 1-Year Subject Tables API
+    url = "https://api.census.gov/data/2022/acs/acs1"
+    
+    # Define the parameters for the API request
+    params = {
+        "get": "NAME,group(B01001)",  # Replace with the specific variables you need
+        "for": "county:101",  # Specify the county code, e.g., 101 for Philadelphia County
+        "in": "state:42",  # Specify the state code, e.g., 42 for Pennsylvania
+        "key": "2addc1e222722ee4913ac6dfa920676578e7f90d" 
+    }
+
+    # Make the API request
+    response = requests.get(url, params=params)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data[1:], columns=data[0])
+        return df
+    else:
+        response.raise_for_status()
+
+# Fetch the data
+acs_agg = fetch_acs_agg_data()
+acs_agg.head()
+
+
+def fetch_acs_pums_data():
+    # Define the base URL for the ACS 1-Year Subject Tables API
+    url = "https://api.census.gov/data/2022/acs/acs1/pums"
+    
+    # Define the parameters for the API request
+    params = {
+        "get": "NAME",  # Replace with the specific variables you need
+        "for": "county:101",  # Specify the county code, e.g., 101 for Philadelphia County
+        "in": "state:42",  # Specify the state code, e.g., 42 for Pennsylvania
+        "key": "2addc1e222722ee4913ac6dfa920676578e7f90d" 
+    }
+
+    # Make the API request
+    response = requests.get(url, params=params)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data, columns=data[0])
+        return df
+    else:
+        response.raise_for_status()
+
+# Fetch the data
+acs_pums = fetch_acs_agg_data()
+acs_pums.head()
+```
+
+```{r}
+#| eval: false
+#| include: false
+
+# Access the Python DataFrame in R
+library(reticulate)
+df_311 <- py$data311
+df_acs <- py$phl_census_df
+# df_acs_agg <- py$acs_agg
+df_acs_pums <- py$acs_pums
+
+
+```

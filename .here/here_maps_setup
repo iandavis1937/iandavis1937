@@ -1,0 +1,17 @@
+conda create --name personalwebenv
+conda activate personalwebenv
+conda list here
+
+# For Python 3.10 or newer
+# you should tell pip to use the certificates installed on your local machine:
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pip_system_certs
+
+conda install -c conda-forge -c https://repo.platform.here.com/artifactory/api/conda/olp_analytics/analytics_sdk here-platform=2.26.0 here-geotiles=2.26.0 here-geopandas-adapter=2.26.0 here-content=2.26.0 here-inspector=2.26.0
+
+conda install -c conda-forge -c https://repo.platform.here.com/artifactory/api/conda/olp_analytics/analytics_sdk here-location-services
+
+# credentials.properties to ./.here/
+
+# In Py script
+platform_cred = PlatformCredentials.from_credentials_file("<Path_to_file>")
+platform_obj = Platform(platform_cred)

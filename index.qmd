@@ -1,15 +1,17 @@
 ---
-title: "Hi,<br>I'm Ian,"
+title: "Home"
 ---
+
+# Hi,      {.unlisted .unnumbered}
+# I'm Ian, {.unlisted .unnumbered}
 
 ```{=html}
 <div class="flip-board">
   <div class="flip-word" id="flipWord">data scientist</div>
 </div>
-```
+
 <br>
 
-```{=html}
 <div class="check-this-out-container">
   <figure class="figure">
     <p><img src="images/check_this_out.png" class="img-fluid quarto-figure quarto-figure-left figure-img" alt="Check This Out" width="320"></p>
@@ -21,26 +23,211 @@ title: "Hi,<br>I'm Ian,"
     <div class="arrowhead vertical-arrowhead"></div>
   </div>
 </div>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
 ```
-<br>
 
-<br>
+## Forthcoming -- Work Sample: Philly 311
+In the meanwhile, [check out some of my previous experiences and collaborators](cv.qmd)
 
-<br>\
+```{r}
+#| include: false
+#| echo: false
 
-<br>
+# Redirect R output to a text file
+sink("output_log.txt", append = TRUE)
 
-<br>
+# Load R package manager
+if (!requireNamespace("pacman", quietly = FALSE)) {
+    install.packages("pacman")
+    library(pacman)
+}
 
-<br>
+# Load reticulate
+if (!requireNamespace("reticulate", quietly = FALSE)) {
+    pacman::p_load(reticulate)
+}
 
-<br>
+library(reticulate)
+# Use a specific conda environment
+use_condaenv("personalwebenv", required = TRUE)
+py_config()
 
-<br>
+sink()
+```
 
-<br>
 
-## Does car traffic lower quality of life?
+```{python}
+#| echo: false
+#| include: false
 
-Work Sample
+import sys
+
+# Redirect Python output to a text file
+with open("output_log.txt", "a") as log_file:
+  sys.stdout = log_file
+
+  # Print the directories that Python searches for modules
+  print("Python module search paths:")
+  for path in sys.path:
+      print(path)
+      
+# Reset stdout back to default
+sys.stdout = sys.__stdout__
+```
+
+
+```{python}
+#| echo: false
+#| include: false
+
+import importlib
+import subprocess
+import sys
+
+def check_install_local(package, conda_package='personalwebenv'):
+    try:
+        # Try importing the package
+        importlib.import_module(package)
+    except ImportError:
+        print(f"{package} not found. Attempting to install...")
+        try:
+            # Attempt to install via conda first
+            subprocess.check_call([sys.executable, '-m', 'conda', 'install', conda_package or package, '-y'])
+        except Exception as e:
+            print(f"Conda installation failed: {e}.")
+
+# Redirect Python output to a text file
+with open("output_log.txt", "a") as log_file:
+  sys.stdout = log_file
+  
+  check_install_local('matplotlib')
+  check_install_local('pandas')
+  check_install_local('geopandas')
+  check_install_local('census', 'census')
+  check_install_local('us', 'us')
+  
+# Reset stdout back to default
+sys.stdout = sys.__stdout__
+```
+
+15 Most Common 311 Calls in the Past 2 Weeks
+
+```{python}
+#| eval: true
+#| echo: false
+#| output: asis
+
+import requests
+import pandas as pd
+from IPython.display import display, HTML
+
+def fetch_311_data():
+    url = "https://phl.carto.com/api/v2/sql"
+    query = "SELECT * FROM public_cases_fc WHERE requested_datetime >= current_date - 14"
+    params = {"q": query}
+
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data['rows'])
+        return df
+    else:
+        response.raise_for_status()
+
+data311 = fetch_311_data()
+head311 = data311.head()
+
+# Group by 'subject', calculate the frequency, and rename 'subject' to 'Subject'
+freq_subject = (data311.groupby('subject')
+                .size()
+                .reset_index(name='Frequency')  # Create the 'Frequency' column
+                .rename(columns={'subject': 'Subject'})  # Rename 'subject' to 'Subject'
+                .sort_values(by='Frequency', ascending=False)  # Sort by 'Frequency' in descending order
+               )
+
+# Identify the top 14 most common values of 'Subject'
+top_14_subjects = freq_subject.nlargest(14, 'Frequency')
+
+# Calculate the total frequency of all other subjects
+other_subjects = freq_subject[~freq_subject['Subject'].isin(top_14_subjects['Subject'])]
+other_total = pd.DataFrame({'Subject': ['Other'], 'Frequency': [other_subjects['Frequency'].sum()]})
+
+# Combine the top 14 subjects with the 'Other' row
+freq_subject = pd.concat([top_14_subjects, other_total], ignore_index=True)
+
+# Convert the DataFrame to an HTML table
+html_table = freq_subject.to_html(classes='dataframe table table-striped', index=False)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| output: asis
+
+cat(py$html_table)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

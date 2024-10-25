@@ -1,0 +1,73 @@
+---
+title: "CV"
+format:
+  html:
+    page-layout: article
+    theme: quartz_custom.scss
+    css: styles.css
+    fontcolor: "#fff"
+    include-before-body: before_body.html
+    toc: true
+    toc-depth: 6
+    toc-location: right
+---
+
+## Ian A. Davis
+
+Philadelphia, PA      /      iandavis1937\@gmail.com      /      [iandavis1937.com](iandavis1937.com)     /     [<i class="fab fa-linkedin"></i>](https://www.linkedin.com/in/ian-davis-b53364b1/)
+
+### [Summary]{.underline}
+
+Detail-oriented data storyteller & self-starter with a passion for advancing social equity via evidence-based solutions
+
+### [Experience]{.underline}
+
+**Center for Social Norms and Behavioral Dynamics, University of Pennsylvania**
+
+***Research Specialist***      Philadelphia, PA                       01/2024 - Present
+
+-   Writing and managing the R & Quarto codebase for seven research manuscripts investigating poverty trap mechanisms from a nationally representative survey of more than 6,000 Americans over two time periods
+
+-   Providing policy-relevant insights about trust in institutions & social networks using Exploratory Factor Analysis and uncovering key determinants of perceived intergenerational mobility via machine learning (weighted LASSO)
+
+-   Contributing to novel survey methodology research quantifying respondents’ uncertainty around future income
+
+**Stanford SPARQ and the Stanford Cohen Lab**
+
+***Research Assistant***      Remote                                02/2023 - 09/2023
+
+-   Used R/RStudio, machine learning techniques (elastic net) and natural language processing to predict changes in over 2,000 participants’ attitudes toward federal welfare
+
+-   Developed a Python/JavaScript text analytics algorithm that gives online survey participants real-time feedback on their communication style for better political discussions
+
+-   Recruited 1,500 college students as online study participants via Qualtrics and an online survey panel
+
+ 
+
+**Intersectionality in the Social Mind Lab, Haverford College**
+
+***Research Assistant***      Haverford, PA                          10/2020 - 12/2022
+
+-   Used R/RStudio, social network analysis, and text analysis to uncover gender-based diƦerences in more than 600 news articles covering police killings
+
+-   Launched and taught data analysis workshops, mentored new lab members, and presented my work in manuscripts, posters, and presentations
+
+### [Education]{.underline}
+
+**B.S., Psychology Major and Statistics Minor**
+
+Haverford College, Haverford, PA                                  08/2018 - 12/2022
+
+-   Graduated cum laude—3.89 GPA
+
+-   Senior Thesis: “Group Status Identity as a Predictor of Social Dominance Orientation in Children”
+
+-   Organized a Psychology department peer mentorship program in collaboration with Psych. Dept. faculty
+
+**Highlighted Coursework**
+
+Geospatial Data Science in Python (UPenn Fall 2024), Applied Impact Evaluation (UPenn Fall 2024)
+
+### [Skills]{.underline}
+
+**Areas of Expertise**: Statistical Modeling, Regression Tehcniques, Machine Learning, NLP, Survey Design, & Spanish **Software**: R/RStudio, Python, PostgreSQL, Stata, Qualtrics, JavaScript, HTML, Ubuntu, Excel, & G Suite\

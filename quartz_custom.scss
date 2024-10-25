@@ -30,6 +30,12 @@ $teal:    #528fb3 !default;
 $teal2:   #2bb7a2 !default;
 $cyan:    #39cbfb !default;
 
+$blue-bg: #3a8fd9 !default;
+// $blue-bg: #518dc2 !default;
+$purple-bg: #7276b8 !default;
+$teal-bg: #6baaa0 !default;
+
+
 $primary:       $purple !default;
 $secondary:     rgba($white, .4) !default;
 $success:       $green !default;
@@ -39,10 +45,27 @@ $danger:        $orange !default;
 $light:         $gray-200 !default;
 $dark:          $gray-900 !default;
 
+/*
+$primary-gradient: linear-gradient(170deg,
+                                   scale-color($blue-bg) 30%, 
+                                   scale-color($purple-bg) 68%,
+                                   scale-color($teal-bg) 98%
+                                   ) !default; 
+*/                                   
+                                   
+$primary-gradient: linear-gradient(170deg,
+                                   scale-color(#518dc2) 30%, 
+                                   scale-color(#7276b8) 68%,
+                                   scale-color(#6baaa0) 98%
+                                   ) !default; 
+   
+   
+/*                                
 $primary-gradient: linear-gradient(170deg,
                                    shade-color($blue, 10%) 30%,
                                    shade-color($purple, 10%) 68%,
                                    shade-color($teal2, 5%) 98%) !default;
+*/                                  
 
 $min-contrast-ratio:   1.5 !default;
 
@@ -54,9 +77,11 @@ $spacer: 2rem !default;
 
 $body-bg:                   $purple !default;
 $body-color:                $white !default;
+$body-margin:               4rem !default;
 
-body {
+body.nav-fixed.quarto-light {
     color: $white; // Ensure body text is white
+    margin: 4rem;
 }
 
 // Links
@@ -98,11 +123,19 @@ $h1-font-size: calc(1.725rem + 1.25vw);
 
 h1 {
   font-size: $h1-font-size;
+  //margin-left: 1rem;
+  //padding-left: 2rem;
+  color: #fff !important; /* Change font color to white */
+}
+
+.quarto-title > h1.title {
+  font-size: 0rem;
+  opacity: 0 !important;
 }
 
 #title-block-header {
   margin-bottom: 0rem;
-  margin-left: 1rem;
+  // margin-left: 1rem;
   margin-right: 4rem;
   padding-bottom: 0rem;
   padding-left: 2rem;
@@ -294,7 +327,7 @@ $btn-close-color:            $white !default;
 // Variables
 
 $body-bg-image: $primary-gradient !default;
-$frosted-opacity: .3 !default;
+$frosted-opacity: .5 !default;
 
 // Mixins
 
@@ -650,9 +683,9 @@ body {
   overflow: hidden;
   border: 0px;
   width: 800px;
-  margin-left: 1rem;
+  // margin-left: 1rem;
   margin-top: 0px;
-  padding-left: 2rem;
+  // padding-left: 2rem;
   padding-top: 0px;
 }
 
@@ -706,8 +739,8 @@ body {
 /* Arrow */
 .check-this-out-container {
   position: relative;
-  margin-left: 1rem;
-  padding-left: 2rem;
+  // margin-left: 1rem;
+  // padding-left: 2rem;
   display: inline-block;
 }
 .check-this-out {
@@ -733,7 +766,7 @@ body {
   height: 5px; /* Height of the horizontal line */
   width: 100px; /* Initial width of the horizontal line */
   left: -79px;
-  bottom: -70px;
+  bottom: -64px;
 }
 
 .horizontal-line::after {
@@ -779,7 +812,7 @@ body {
   width: 5px; /* Width of the vertical line */
   height: 0; /* Initial height of the vertical line */
   position: absolute; /* Position relative to the arrow container */
-  top: 70px; /* Adjust this value to change the starting y position */
+  top: 64px; /* Adjust this value to change the starting y position */
   display: none; /* Initially hidden */
 }
 
