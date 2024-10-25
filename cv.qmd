@@ -14,7 +14,7 @@ format:
 
 ## Ian A. Davis
 
-Philadelphia, PA      /      iandavis1937\@gmail.com      /      [iandavis1937.com](iandavis1937.com)     /     [<i class="fab fa-linkedin"></i>](https://www.linkedin.com/in/ian-davis-b53364b1/)
+Philadelphia, PA      /      iandavis1937\@gmail.com      /      [iandavis1937.com](index.qmd)     /     [<i class="fab fa-linkedin"></i>](https://www.linkedin.com/in/ian-davis-b53364b1/)
 
 ### [Summary]{.underline}
 
