@@ -31,6 +31,7 @@ Each secret has a corresponding example file in the repo. Copy it to the locatio
 - The TomTom frontend key is visible in browser devtools by nature of client-side JS. Mitigate this by restricting the key to your domain via HTTP referer in the [TomTom Developer Portal](https://developer.tomtom.com/).
 - `credentials.properties` and all `.env` files are covered by `.gitignore`.
 - `private/` is covered by `.gitignore` so the directory cannot be accidentally committed.
+- `.cpanel.yml` wipes `public_html/_site/` on deployment, leaving `private/`, `backend`, and `traffic-tutorial-...` with stable files for secrets
 
 ---
 
