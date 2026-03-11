@@ -2,4 +2,6 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/disk2/iandavis/public_html
+    - /bin/rm -rf $DEPLOYPATH/*
     - /bin/cp -R * $DEPLOYPATH
+    - /bin/cp -R _site/* $DEPLOYPATH
