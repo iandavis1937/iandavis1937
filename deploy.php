@@ -1,5 +1,6 @@
 <?php
-$secret = 'among-hedgehog-garden';
+require '/home/iandavis1937/private/config.php';
+$secret = DEPLOY_SECRET;
 $sig = 'sha256=' . hash_hmac('sha256', file_get_contents('php://input'), $secret);
 
 if (!hash_equals($sig, $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '')) {

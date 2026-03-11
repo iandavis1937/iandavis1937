@@ -20,12 +20,8 @@ from shapely.ops import nearest_points
 from here.platform import Platform
 from here.platform.environment import Environment
 
-# Set environment variables
-os.environ['HERE_USER_ID'] = 'HERE-55d43d71-e9c1-484c-8cc2-cdefe2f89c0b'
-os.environ['HERE_CLIENT_ID'] = 'm4nsS1RWCxohQ4TXoJ1R'
-os.environ['HERE_ACCESS_KEY_ID'] = 'Owqh82aDvMMSivRiULlJYg'
-os.environ['HERE_ACCESS_KEY_SECRET'] = 'oKmq8_cZwH3SKizg6rSd9jdORF_sypZFCRqawNt8-Es26sF8EpOfAvWu87RxIQsh0XaPfwZtCIojTxlZ1aAmVA'
-os.environ['HERE_TOKEN_ENDPOINT_URL'] = 'https://account.api.here.com/oauth2/token'
+# Credentials are loaded from .here/credentials.properties by the HERE SDK automatically.
+# Do not hardcode credentials here. See here_maps_setup for setup instructions.
 
 
 from here.platform import Platform

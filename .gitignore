@@ -5,4 +5,13 @@
 
 /.quarto/
 
+credentials.properties
+.env
+.env.local
 
+output_log.txt
+_site/
+
+traffic-tutorial-web-sdk/config.js
+backend/.env
+private/

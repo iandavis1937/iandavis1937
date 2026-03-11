@@ -1,5 +1,9 @@
+import os
 import requests
 import urllib.parse as urlparse
+from dotenv import load_dotenv
+
+load_dotenv()
  
 # Route parameters
 start = "37.77493,-122.419415"               # San Francisco
@@ -10,7 +14,7 @@ travelMode = "truck"                         # Travel by truck
 avoid = "unpavedRoads"                       # Avoid unpaved roads
 departAt = "2021-10-20T10:00:00"             # Departure date and time
 vehicleCommercial = "true"                    # Commercial vehicle
-key = "key=0SaclIbTplyYvBQjgKzAmzCBBfALIFuw"         # API Key
+key = os.environ.get('TOMTOM_API_KEY', '')           # API Key
  
 # Building the request URL
 baseUrl = "https://api.tomtom.com/routing/1/calculateRoute/";
