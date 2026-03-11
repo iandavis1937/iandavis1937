@@ -22,6 +22,26 @@ Detail-oriented data storyteller & self-starter with a passion for advancing soc
 
 ### [Experience]{.underline}
 
+**Varsity Tutors**
+***Math & Statistics Tutor***      Remote                                                                                                                                   03/2026 - Present
+- Tutored individuals and small groups of up to 6 students several times weekly to advance their comprehension of mathematics and statistics topics ranging from basic math literacy to calculus and college-level statistics
+
+**Penn Development Research Initiative, DevLab**
+***Consulting Data Scientist***      Remote                                                                                                                             09/2024 – Present
+- Used geospatial raster data and Python-powered computer vision to compare the prevalence of illegal charcoal kiln sites in treatment and comparison areas of Zambia
+- Contributed matching weight & regression analyses to the results sections of impact evaluations assessing agroforestry interventions among cocoa farmers in Cote D’Ivoire and Ghana
+
+**DataPulse Research**
+***Freelance Contributing Data Journalist***      Remote                                                                                                 03/2025 – 01/2026
+- Authored short-form articles paired with interactive dashboards to communicate statistical insights on politics, culture, and leisure for a startup web publication
+- Scraped and analyzed web data using Python tools like BeautifulSoup, Ibis, Polars, Pandas, & Scikit-learn to generate interactive dashboard visualizations with Panel, Plotly, Leaflet, Datawrapper, and D3.js
+
+**Mathematica Policy Research**
+***Bilingual Field Data Collector***      Springfield, MA                                                                                                      10/2025 – 12/2025
+- Managed 200+ cases for the 2025 Mass ECHOS household finance survey for the Federal Reserve Bank of Boston
+- Recruited respondents in-person at their residence using English, Spanish, and relationship-building skills
+
+
 **Center for Social Norms and Behavioral Dynamics, University of Pennsylvania**
 
 ***Research Specialist***      Philadelphia, PA                       01/2024 - Present
@@ -52,6 +72,20 @@ Detail-oriented data storyteller & self-starter with a passion for advancing soc
 
 -   Launched and taught data analysis workshops, mentored new lab members, and presented my work in manuscripts, posters, and presentations
 
+**Department of Psychology, Haverford College**
+***Research Statistics Teaching Assistant***      Haverford, PA                                                                                      01/2022 - 05/2022
+- Tutored individuals and small groups of up to 10 students 3-4 times weekly to advance their comprehension of statistics, quantitative research methods, and the data analysis software Jamovi
+
+**Internal Revenue Service/Coding it Forward**
+***Data Analyst Fellow***      Remote                                                                                                                                      06/2022 - 08/2022
+- Selected from 1,600 applicants to join 160 early-career technologists in exploring federal careers
+- Empowered my team to prioritize instances of major tax fraud by developing a wealth estimator tool using recent economic research, R/RStudio, Stata, and PostgreSQL
+- Presented to senior leadership, including Acting Director of the Ofﬁce of Fraud Enforcement Katie Fox
+
+**The Kensington Storefront, Mural Arts Philadelphia**
+***Program Facilitator***      Philadelphia, PA                                                                                                                       06/2020 - 09/2021
+- Supported the mission of Mural Arts, Philadelphia’s pre-eminent arts and behavioral health non-proﬁt, by organizing and teaching a custom introductory Spanish course to more than 30 direct service providers
+
 ### [Education]{.underline}
 
 **B.S., Psychology Major and Statistics Minor**
@@ -64,10 +98,13 @@ Haverford College, Haverford, PA                        �
 
 -   Organized a Psychology department peer mentorship program in collaboration with Psych. Dept. faculty
 
-**Highlighted Coursework**
+**Non-Degree Graduate Studies**									
+University of Pennsylvania, Philadelphia, PA                                  08/2024 - 12/2024                                                                                                            08/2024 - 12/2024
+- Completed two courses using tuition benefits: Applied Impact Evaluation & Geospatial Data Science in Python
+- Cum. GPA: 3.85
 
-Geospatial Data Science in Python (UPenn Fall 2024), Applied Impact Evaluation (UPenn Fall 2024)
 
 ### [Skills]{.underline}
 
-**Areas of Expertise**: Statistical Modeling, Regression Tehcniques, Machine Learning, NLP, Survey Design, & Spanish **Software**: R/RStudio, Python, PostgreSQL, Stata, Qualtrics, JavaScript, HTML, Ubuntu, Excel, & G Suite\
+**Areas of Expertise**: Statistical Modeling, Regression Techniques, Machine Learning, NLP, Survey Design, & Spanish
+**Software**: R/RStudio, Python, PostgreSQL, Stata, Qualtrics, JavaScript, HTML, Ubuntu, Excel, & G Suite 
