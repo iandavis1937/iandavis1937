@@ -6,8 +6,8 @@ window.addEventListener('scroll', () => {
   const totalHeight = document.body.scrollHeight - windowHeight;
   const scrollPercentage = scrollPosition / totalHeight;
   const angle = 170 + (scrollPercentage * 15); // Adjust the 180 value to control how much the angle changes
-  const blue = "#3a8fd9"; 
-  const purple = "#686dc3"; 
-  const teal2 = "#2bb7a2";
-  document.body.style.backgroundImage = `linear-gradient(${angle}deg, ${blue}, ${purple}, ${teal2})`;
+  const blue = "#518dc2";
+  const purple = "#7276b8";
+  const teal = "#6baaa0";
+  document.body.style.backgroundImage = `linear-gradient(${angle}deg, ${blue} 30%, ${purple} 68%, ${teal} 98%)`;
 });
