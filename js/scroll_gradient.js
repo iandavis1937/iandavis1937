@@ -9,5 +9,5 @@ window.addEventListener('scroll', () => {
   const blue = "#518dc2";
   const purple = "#7276b8";
   const teal = "#6baaa0";
-  document.body.style.backgroundImage = `linear-gradient(${angle}deg, ${blue} 30%, ${purple} 68%, ${teal} 98%)`;
+  document.body.style.backgroundImage = `linear-gradient(${angle}deg, ${blue} 35%, ${purple} 73%, ${teal} 99%)`;
 });
