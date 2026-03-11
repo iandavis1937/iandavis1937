@@ -63,7 +63,7 @@ Detail-oriented data storyteller & self-starter with a passion for advancing soc
 ::: cv-entry
 **Center for Social Norms and Behavioral Dynamics, University of Pennsylvania**
 
-***Research Specialist*** &emsp; Philadelphia, PA                       [01/2024 - Present]{.cv-date}
+***Research Specialist*** &emsp; Philadelphia, PA                       [01/2024 - 02/2025]{.cv-date}
 
 -   Writing and managing the R & Quarto codebase for seven research manuscripts investigating poverty trap mechanisms from a nationally representative survey of more than 6,000 Americans over two time periods
 
