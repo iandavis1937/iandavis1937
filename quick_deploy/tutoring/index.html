@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olympic Peak Ages: Histogram Explorer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+
+  /* ── Progress Bar ── */
+  #progress-bar-container {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 10px; background: #e2e8f0;
+  }
+  #progress-bar {
+    height: 100%; background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.5s ease;
+  }
+
+  /* ── Screen wrapper ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ══════════════════ WELCOME SCREEN ══════════════════ */
+  #screen-welcome {
+    max-width: 760px; margin: 0 auto; padding: 60px 24px 40px;
+  }
+  .welcome-hero {
+    text-align: center; margin-bottom: 40px;
+  }
+  .welcome-hero .sport-icons {
+    font-size: 3rem; letter-spacing: 12px; margin-bottom: 16px;
+  }
+  .welcome-hero h1 {
+    font-size: 2.4rem; font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 10px;
+  }
+  .welcome-hero p.subtitle {
+    font-size: 1.1rem; color: #4a5568; max-width: 560px; margin: 0 auto;
+  }
+
+  .info-cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 32px;
+  }
+  .info-card {
+    background: #fff; border-radius: 14px; padding: 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .info-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #2d3748; }
+  .info-card p { font-size: 0.88rem; color: #4a5568; line-height: 1.55; }
+
+  .mini-example {
+    background: #fff; border-radius: 14px; padding: 22px; margin-bottom: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .mini-example h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+  .mini-example-svg-wrap { display: flex; justify-content: center; }
+
+  .instructions-list {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 1.5px solid #667eea40; border-radius: 14px;
+    padding: 20px 24px; margin-bottom: 32px;
+  }
+  .instructions-list h3 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #553c9a; }
+  .instructions-list ol { padding-left: 20px; }
+  .instructions-list li { font-size: 0.9rem; color: #4a5568; margin-bottom: 6px; line-height: 1.5; }
+
+  .btn-start {
+    display: block; width: 260px; margin: 0 auto;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff; font-size: 1.15rem; font-weight: 700; padding: 16px 32px;
+    border: none; border-radius: 50px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102,126,234,.45);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(102,126,234,.55); }
+
+  /* ══════════════════ SPORT SCREEN ══════════════════ */
+  #screen-sport {
+    max-width: 1100px; margin: 0 auto; padding: 28px 20px 40px;
+  }
+  .sport-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+  }
+  .sport-title-group { display: flex; align-items: center; gap: 12px; }
+  .sport-emoji { font-size: 2.4rem; }
+  .sport-header h2 { font-size: 1.6rem; font-weight: 800; }
+  .sport-progress-badge {
+    background: #e2e8f0; color: #4a5568; font-size: 0.85rem;
+    font-weight: 600; padding: 5px 14px; border-radius: 20px;
+  }
+  .sport-description {
+    font-size: 0.9rem; color: #4a5568; font-style: italic;
+    margin-bottom: 20px; max-width: 780px;
+  }
+
+  .sport-layout {
+    display: grid; grid-template-columns: 280px 1fr; gap: 20px;
+  }
+
+  /* Left panel */
+  .left-panel {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .panel-card {
+    background: #fff; border-radius: 14px; padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .panel-card h4 {
+    font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; color: #718096; margin-bottom: 12px;
+  }
+
+  .age-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .age-chip {
+    background: #edf2f7; color: #2d3748; font-size: 1.15rem;
+    font-weight: 600; padding: 3px 9px; border-radius: 20px;
+  }
+
+  .tally-table {
+    width: 100%; border-collapse: collapse; font-size: 0.82rem;
+  }
+  .tally-table th {
+    text-align: left; padding: 4px 6px; border-bottom: 2px solid #e2e8f0;
+    font-weight: 700; color: #4a5568;
+  }
+  .tally-table td {
+    padding: 4px 6px; border-bottom: 1px solid #f0f4f8; color: #2d3748;
+  }
+  .tally-table td:last-child { color: #a0aec0; font-style: italic; }
+
+  /* Right panel */
+  .right-panel {
+    background: #fff; border-radius: 14px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .plot-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .plot-title { font-size: 1rem; font-weight: 700; color: #2d3748; }
+  .plot-hint { font-size: 0.8rem; color: #718096; margin-top: 4px; }
+  .plot-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn {
+    border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+    font-size: 0.85rem; padding: 9px 18px; transition: opacity .15s, transform .15s;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-draw { background: #667eea; color: #fff; }
+  .btn-check { background: #48bb78; color: #fff; }
+  .btn-next { background: #ed8936; color: #fff; }
+  .btn-reset { background: #e2e8f0; color: #4a5568; }
+
+  #plot-svg-container {
+    position: relative; overflow: visible;
+  }
+  #plot-svg {
+    display: block; cursor: crosshair; user-select: none;
+  }
+
+  .check-result {
+    margin-top: 14px; padding: 14px 18px; border-radius: 10px;
+    display: none;
+  }
+  .check-result.visible { display: block; }
+  .check-result .score { font-weight: 800; font-size: 1.1rem; margin-bottom: 6px; }
+  .check-result .distribution-note { font-size: 0.88rem; color: #4a5568; margin-top: 8px; }
+
+  .action-row {
+    display: flex; align-items: center; gap: 12px; margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  /* ══════════════════ COMPARISON SCREEN ══════════════════ */
+  #screen-comparison {
+    max-width: 900px; margin: 0 auto; padding: 36px 20px 60px;
+  }
+  #screen-comparison h2 {
+    font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 6px;
+  }
+  #screen-comparison .comp-subtitle {
+    text-align: center; color: #4a5568; font-size: 0.95rem; margin-bottom: 28px;
+  }
+  .comp-chart-card {
+    background: #fff; border-radius: 16px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.09); margin-bottom: 24px;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 16px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 7px; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; padding: 6px 10px; border-radius: 8px;
+    border: 2px solid transparent; transition: background .15s, border-color .15s, opacity .15s;
+    user-select: none;
+  }
+  .legend-item:hover { background: #f0f4f8; }
+  .legend-item.legend-active {
+    border-color: currentColor; background: #f0f4f8;
+  }
+  .legend-item.legend-dimmed { opacity: 0.4; }
+  .legend-swatch {
+    width: 18px; height: 18px; border-radius: 3px;
+  }
+
+  .reflection-questions { display: flex; flex-direction: column; gap: 18px; margin-bottom: 28px; }
+  .question-card {
+    background: #fff; border-radius: 14px; padding: 20px 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .question-card .q-text { font-weight: 700; font-size: 0.95rem; margin-bottom: 12px; }
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .q-option {
+    background: #f7fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    padding: 9px 14px; cursor: pointer; font-size: 0.88rem; font-weight: 500;
+    transition: background .15s, border-color .15s; text-align: left;
+  }
+  .q-option:hover:not(.answered) { background: #ebf8ff; border-color: #90cdf4; }
+  .q-option.correct { background: #f0fff4; border-color: #68d391; color: #276749; }
+  .q-option.incorrect { background: #fff5f5; border-color: #fc8181; color: #9b2c2c; }
+  .q-option.revealed-correct { background: #f0fff4; border-color: #68d391; color: #276749; }
+  .q-feedback {
+    margin-top: 10px; font-size: 0.83rem; padding: 8px 12px; border-radius: 6px;
+    display: none;
+  }
+  .q-feedback.visible { display: block; }
+  .q-feedback.correct-fb { background: #f0fff4; color: #276749; }
+  .q-feedback.incorrect-fb { background: #fff5f5; color: #9b2c2c; }
+
+  /* ── Table question ── */
+  .vocab-box {
+    background: #f0f4ff; border-left: 3px solid #667eea;
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px;
+    font-size: 0.87rem; color: #2d3748; line-height: 1.85;
+  }
+  .vocab-box strong { color: #553c9a; }
+  .stat-table {
+    width: 100%; border-collapse: collapse; font-size: 0.88rem;
+    margin-bottom: 14px;
+  }
+  .stat-table th {
+    background: #f7fafc; padding: 8px 10px; text-align: center;
+    font-weight: 700; color: #4a5568; border-bottom: 2px solid #e2e8f0;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .stat-table thead tr:first-child th:first-child { text-align: left; }
+  .stat-table th.group-header {
+    background: #eef1fc; color: #553c9a; border-bottom: 1px solid #c7d0f0;
+    font-size: 0.82rem; letter-spacing: 0.06em;
+  }
+  .stat-table td {
+    padding: 8px 8px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; text-align: center;
+  }
+  .stat-table td:first-child { font-weight: 600; font-size: 0.85rem; text-align: left; }
+  .stat-table input[type="number"], .stat-table select {
+    width: 72px; padding: 6px 6px; border: 1.5px solid #e2e8f0; border-radius: 6px;
+    font-size: 0.88rem; text-align: center; outline: none; background: #fff;
+    transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  .stat-table input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .stat-table select { width: 88px; text-align: center; cursor: pointer; }
+  .stat-table input:focus, .stat-table select:focus { border-color: #667eea; }
+  .stat-table .cell-correct { border-color: #68d391 !important; background: #f0fff4 !important; color: #276749; }
+  .stat-table .cell-wrong   { border-color: #fc8181 !important; background: #fff5f5 !important; color: #9b2c2c; }
+  .btn-check-table {
+    background: #667eea; color: #fff; border: none; border-radius: 8px;
+    padding: 9px 22px; font-weight: 700; font-size: 0.88rem;
+    cursor: pointer; transition: opacity .15s, transform .15s;
+  }
+  .btn-check-table:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-check-table:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  .btn-see-results {
+    display: block; width: 220px; margin: 0 auto 32px;
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    color: #fff; font-size: 1rem; font-weight: 700; padding: 13px 28px;
+    border: none; border-radius: 50px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(237,137,54,.4);
+    display: none;
+  }
+  .btn-see-results.visible {
+    display: block;
+  }
+
+  .final-results {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 1.5px solid #667eea40; border-radius: 16px;
+    padding: 28px; display: none;
+  }
+  .final-results.visible { display: block; }
+  .final-results h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 12px; }
+  .final-score { font-size: 2rem; font-weight: 900; color: #553c9a; margin-bottom: 12px; }
+  .insight-box {
+    background: #fff; border-radius: 12px; padding: 18px; margin-top: 16px;
+    font-size: 0.88rem; color: #4a5568; line-height: 1.65;
+  }
+  .insight-box h4 { font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+
+  .btn-play-again {
+    display: block; width: 200px; margin: 24px auto 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; font-size: 0.95rem; font-weight: 700; padding: 12px 24px;
+    border: none; border-radius: 50px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(102,126,234,.4);
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .sport-layout { grid-template-columns: 1fr; }
+    .info-cards { grid-template-columns: 1fr; }
+    .welcome-hero h1 { font-size: 1.7rem; }
+    #screen-sport { padding: 20px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div id="progress-bar-container" style="display:none">
+  <div id="progress-bar" style="width:0%"></div>
+</div>
+
+<!-- ════════════════ SCREEN 1: WELCOME ════════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div>
+    <div class="welcome-hero">
+      <div class="sport-icons">🤸 🏊 🏋️ 🐴 ⛵ 🎯</div>
+      <h1>Olympic Peak Ages<br>Histogram Explorer</h1>
+      <p class="subtitle">
+        Discover how athletes' peak performance ages differ across sports —
+        by building <strong>histograms</strong> from real-world data.
+      </p>
+    </div>
+
+    <div class="info-cards">
+      <div class="info-card">
+        <h3>📊 What is a Histogram?</h3>
+        <p>
+          A <strong>histogram</strong> uses bars to show how often values fall in each interval.
+          The x-axis shows intervals (called <strong>bins</strong>),
+          the y-axis shows how many data points fall in each bin, and the height of each bar
+          represents the <strong>frequency</strong> for that bin.
+        </p>
+      </div>
+      <div class="info-card">
+        <h3>📦 What are Bins?</h3>
+        <p>
+          <strong>Bins</strong> (or class intervals) are groups that organize continuous data.
+          This game uses <strong>3-year-wide bins</strong>: "14–16" contains ages 14, 15, and 16;
+          "17–19" contains 17, 18, and 19; and so on.
+          Counting how many data points fall in each bin gives us the <strong>frequency</strong>.
+        </p>
+      </div>
+      <div class="info-card">
+        <h3>📐 Distribution Shapes</h3>
+        <p>
+          <strong>Skewed right (positively skewed):</strong> tail extends to the right; most data on the left.<br>
+          <strong>Skewed left:</strong> tail extends left; most data on the right.<br>
+          <strong>Bell-shaped (symmetric):</strong> roughly equal on both sides, peaked in the middle.
+        </p>
+      </div>
+      <div class="info-card">
+        <h3>🏅 About This Data</h3>
+        <p>
+          You'll analyze age distributions of Olympic medalists from six very different sports:
+          Women's Artistic Gymnastics, Men's 200m Freestyle Swimming, Men's Weightlifting,
+          Equestrian Dressage, Olympic Sailing, and Olympic Trap Shooting. Each sport has exactly <strong>20 athletes</strong>.
+        </p>
+      </div>
+    </div>
+
+    <div class="mini-example">
+      <h3>Example: How a Histogram is Built</h3>
+      <div class="mini-example-svg-wrap">
+        <svg width="480" height="160" viewBox="0 0 480 160">
+          <defs>
+            <marker id="ah" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#718096"/>
+            </marker>
+          </defs>
+          <!-- axes -->
+          <line x1="50" y1="130" x2="460" y2="130" stroke="#718096" stroke-width="1.5" marker-end="url(#ah)"/>
+          <line x1="50" y1="130" x2="50" y2="15" stroke="#718096" stroke-width="1.5" marker-end="url(#ah)"/>
+          <!-- y labels -->
+          <text x="44" y="132" text-anchor="end" font-size="10" fill="#718096">0</text>
+          <text x="44" y="107" text-anchor="end" font-size="10" fill="#718096">1</text>
+          <text x="44" y="82" text-anchor="end" font-size="10" fill="#718096">2</text>
+          <text x="44" y="57" text-anchor="end" font-size="10" fill="#718096">3</text>
+          <text x="44" y="32" text-anchor="end" font-size="10" fill="#718096">4</text>
+          <!-- y gridlines -->
+          <line x1="50" y1="105" x2="460" y2="105" stroke="#e2e8f0" stroke-width="1"/>
+          <line x1="50" y1="80" x2="460" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+          <line x1="50" y1="55" x2="460" y2="55" stroke="#e2e8f0" stroke-width="1"/>
+          <line x1="50" y1="30" x2="460" y2="30" stroke="#e2e8f0" stroke-width="1"/>
+          <!-- x bins -->
+          <text x="108" y="145" text-anchor="middle" font-size="10" fill="#4a5568">10–12</text>
+          <text x="175" y="145" text-anchor="middle" font-size="10" fill="#4a5568">13–15</text>
+          <text x="242" y="145" text-anchor="middle" font-size="10" fill="#4a5568">16–18</text>
+          <text x="309" y="145" text-anchor="middle" font-size="10" fill="#4a5568">19–21</text>
+          <text x="376" y="145" text-anchor="middle" font-size="10" fill="#4a5568">22–24</text>
+          <!-- histogram bars -->
+          <rect x="82" y="130" width="52" height="0" fill="#667eeacc" stroke="#667eea" stroke-width="1.5"/>
+          <rect x="149" y="105" width="52" height="25" fill="#667eeacc" stroke="#667eea" stroke-width="1.5"/>
+          <rect x="216" y="55" width="52" height="75" fill="#667eeacc" stroke="#667eea" stroke-width="1.5"/>
+          <rect x="283" y="80" width="52" height="50" fill="#667eeacc" stroke="#667eea" stroke-width="1.5"/>
+          <rect x="350" y="130" width="52" height="0" fill="#667eeacc" stroke="#667eea" stroke-width="1.5"/>
+          <!-- freq labels -->
+          <text x="175" y="99" text-anchor="middle" font-size="9" fill="#667eea" font-weight="700">1</text>
+          <text x="242" y="49" text-anchor="middle" font-size="9" fill="#667eea" font-weight="700">3</text>
+          <text x="309" y="74" text-anchor="middle" font-size="9" fill="#667eea" font-weight="700">2</text>
+          <!-- axis labels -->
+          <text x="255" y="158" text-anchor="middle" font-size="10" fill="#4a5568" font-style="italic">Age Bin →</text>
+          <text x="14" y="80" text-anchor="middle" font-size="10" fill="#4a5568" font-style="italic" transform="rotate(-90,14,80)">Frequency</text>
+        </svg>
+      </div>
+      <p style="font-size:0.82rem;color:#718096;text-align:center;margin-top:6px;">
+        Bars are drawn at the frequency for each bin. Taller bars = more athletes in that age range.
+      </p>
+    </div>
+
+    <div class="instructions-list">
+      <h3>How to Play</h3>
+      <ol>
+        <li>You'll see raw age data for each sport on the left side of the screen.</li>
+        <li>Count how many athletes fall in each age bin (the tally table helps you organize this).</li>
+        <li><strong>Click on the grid</strong> in the right panel to set the bar height at the correct frequency for each bin.</li>
+        <li>Click "Check Answer" to see how you did.</li>
+        <li>After all 6 sports, compare the distributions on a single combined chart.</li>
+      </ol>
+    </div>
+
+    <button class="btn-start" onclick="startGame()">Start Game →</button>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN 2-5: SPORT ════════════════ -->
+<div id="screen-sport" class="screen">
+  <div class="sport-header">
+    <div class="sport-title-group">
+      <span class="sport-emoji" id="sport-emoji"></span>
+      <h2 id="sport-name"></h2>
+    </div>
+    <span class="sport-progress-badge" id="sport-progress-badge">Sport 1 of 4</span>
+  </div>
+  <p class="sport-description" id="sport-description"></p>
+
+  <div class="sport-layout">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <div class="panel-card">
+        <h4>Raw Age Data (sorted)</h4>
+        <div class="age-chips" id="age-chips-container"></div>
+      </div>
+      <div class="panel-card">
+        <h4>Tally Helper</h4>
+        <table class="tally-table">
+          <thead>
+            <tr><th>Age Bin</th><th>Count</th></tr>
+          </thead>
+          <tbody id="tally-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="plot-header">
+        <div>
+          <div class="plot-title">Build the Histogram</div>
+          <div class="plot-hint">Click on the grid to set each bar's height at the correct frequency (0–12). Click the same height again to reset to 0.</div>
+        </div>
+        <div class="plot-actions">
+          <button class="btn btn-reset" onclick="resetPlot()">Reset</button>
+          <button class="btn btn-check" onclick="checkAnswer()">Check Answer ✓</button>
+        </div>
+      </div>
+      <div id="plot-svg-container">
+        <svg id="plot-svg" width="620" height="370"></svg>
+      </div>
+      <div class="check-result" id="check-result">
+        <div class="score" id="check-score"></div>
+        <div id="check-bins-detail"></div>
+        <div class="distribution-note" id="distribution-note"></div>
+      </div>
+      <div class="action-row" id="action-row">
+        <button class="btn btn-next" id="btn-next" onclick="nextSport()" style="display:none">Next Sport →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN 6: COMPARISON ════════════════ -->
+<div id="screen-comparison" class="screen">
+  <h2>Comparing Peak Ages Across Sports</h2>
+  <p class="comp-subtitle">All four histograms overlaid — see how athletic peak ages vary dramatically by sport.</p>
+
+  <div class="comp-chart-card">
+    <svg id="comp-svg" width="840" height="380" viewBox="0 0 840 380" style="max-width:100%;height:auto;display:block;margin:0 auto;"></svg>
+    <div class="legend" id="comp-legend"></div>
+  </div>
+
+  <div class="reflection-questions" id="reflection-questions"></div>
+
+  <button class="btn-see-results" id="btn-see-results" onclick="showFinalResults()">See Results 🎉</button>
+
+  <div class="final-results" id="final-results">
+    <h3>Your Final Results</h3>
+    <div class="final-score" id="final-score-display"></div>
+    <div class="insight-box">
+      <h4>Statistics Insight: What Do These Distributions Tell Us?</h4>
+      <p>
+        These six sports illustrate how physical demands shape an athlete's career arc.
+        <strong>Women's Artistic Gymnastics</strong> peaks extremely young (17–19) because it rewards
+        explosive power, flexibility, and fearlessness that are often at their apex before full skeletal
+        maturation. The distribution is <em>sharply right-skewed</em>, with almost no athletes past age 23.
+      </p>
+      <p style="margin-top:10px;">
+        <strong>Men's 200m Freestyle Swimming</strong> peaks slightly later (21–23), combining raw speed
+        (youth) with technical refinement (experience), producing a distribution that is fairly
+        <em>bell-shaped</em> but still skewed right.
+      </p>
+      <p style="margin-top:10px;">
+        <strong>Men's Weightlifting</strong> peaks in the late 20s (26–28). Building elite-level strength
+        and perfecting the snatch and clean-and-jerk technique requires years, so the distribution is
+        <em>roughly symmetric</em> and centered later than either aquatic sport.
+      </p>
+      <p style="margin-top:10px;">
+        <strong>Equestrian Dressage</strong> stands apart with a distribution spanning ages 30–52 and
+        peaking around 38–40. The sport rewards the deep partnership between rider and horse —
+        a skill that only grows with decades of practice. Its distribution is <em>skewed left</em>
+        with an unusually wide spread.
+      </p>
+      <p style="margin-top:10px;">
+        <strong>Olympic Sailing</strong> has no dominant peak — athletes compete successfully from
+        their early 20s all the way into their mid-40s. The distribution is <em>roughly uniform</em>,
+        reflecting a sport where tactical intelligence and experience offset the physical advantages
+        of youth, so no single age range dominates.
+      </p>
+      <p style="margin-top:10px;">
+        <strong>Olympic Trap Shooting</strong> is the clearest example of a <em>left-skewed</em>
+        distribution. The peak sits at 44–46 — unusually late for any sport — and the distribution
+        falls off steeply to the right while trailing back to age 30 on the left. Because accuracy
+        and calm focus take 15–20 years of competitive repetition to develop, youth is almost no
+        advantage at all.
+      </p>
+      <p style="margin-top:10px;">
+        Understanding distribution shapes helps statisticians and sports scientists predict when
+        athletes are most likely to perform at their best — and design training programs accordingly.
+      </p>
+    </div>
+    <button class="btn-play-again" onclick="playAgain()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const BINS = [
+  "14–16","17–19","20–22","23–25","26–28",
+  "29–31","32–34","35–37","38–40","41–43","44–46","47–49","50–52"
+];
+const BIN_RANGES = [
+  [14,16],[17,19],[20,22],[23,25],[26,28],
+  [29,31],[32,34],[35,37],[38,40],[41,43],[44,46],[47,49],[50,52]
+];
+
+const SPORTS = [
+  {
+    name: "Women's Artistic Gymnastics",
+    emoji: "🤸",
+    color: "#E63946",
+    ages: [14,15,15,16,16,16,17,17,17,18,18,18,19,19,19,20,20,21,22,23],
+    description: "In gymnastics, agility and fearlessness favor youth. These are the ages at which female gymnasts won Olympic medals.",
+    distributionNote: "The peak age bin is <strong>17–19 with 9 athletes</strong>. The distribution is <em>skewed right</em> — most athletes are in their late teens with a long tail into the early 20s.",
+  },
+  {
+    name: "Men's 200m Freestyle Swimming",
+    emoji: "🏊",
+    color: "#0077B6",
+    ages: [17,18,19,19,20,20,21,21,21,22,22,22,23,23,24,24,25,26,27,28],
+    description: "Swimmers combine speed, strength, and technique. These are the ages at which male swimmers won Olympic medals in the 200m freestyle.",
+    distributionNote: "The peak age bin is <strong>20–22 with 8 athletes</strong>. The distribution is <em>approximately bell-shaped</em>, centered in the early 20s.",
+  },
+  {
+    name: "Men's Olympic Weightlifting",
+    emoji: "🏋️",
+    color: "#2D6A4F",
+    ages: [20,21,22,23,24,24,25,25,26,26,27,27,28,28,29,30,31,32,33,35],
+    description: "Weightlifting demands years of strength development and technical mastery. These are the ages at which male weightlifters won Olympic medals.",
+    distributionNote: "The peak age bin is <strong>26–28 with 6 athletes</strong>. The distribution is <em>roughly symmetric</em>, centered in the late 20s.",
+  },
+  {
+    name: "Equestrian Dressage",
+    emoji: "🐴",
+    color: "#774936",
+    ages: [30,32,34,35,36,37,38,38,39,40,40,41,42,43,44,45,46,48,50,52],
+    description: "Dressage rewards decades of horsemanship and refined communication with the horse. These are the ages at which dressage riders won Olympic medals.",
+    distributionNote: "The peak age bin is <strong>38–40 with 5 athletes</strong>. The distribution is <em>skewed left</em> with the widest spread of any sport — spanning nearly 25 years.",
+  },
+  {
+    name: "Olympic Sailing",
+    emoji: "⛵",
+    color: "#0096C7",
+    ages: [22,24,25,26,27,28,29,30,30,31,32,33,34,35,36,37,38,40,42,45],
+    description: "Sailing blends physical fitness with tactical mastery and weather reading. These are the ages at which Olympic sailors won medals across various fleet and match racing events.",
+    distributionNote: "The peak age bin is <strong>29–31 with 3 athletes</strong>, but no bin dominates strongly. The distribution is <em>roughly uniform</em> — athletes compete at a high level across a wide span of ages.",
+  },
+  {
+    name: "Olympic Trap Shooting",
+    emoji: "🎯",
+    color: "#7B2D8B",
+    ages: [30,34,37,39,40,41,42,43,44,44,45,45,46,46,47,47,48,48,49,50],
+    description: "Trap shooting is almost entirely a precision and focus skill — physical strength matters little. These are the ages at which Olympic trap shooters won medals.",
+    distributionNote: "The peak age bin is <strong>44–46 with 6 athletes</strong>. The distribution is <em>skewed left</em> — most athletes are in their mid-to-late 40s, with a thin tail reaching back to age 30.",
+  }
+];
+
+// Compute correct frequencies
+SPORTS.forEach(s => {
+  s.frequencies = BIN_RANGES.map(([lo, hi]) =>
+    s.ages.filter(a => a >= lo && a <= hi).length
+  );
+});
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let currentSportIdx = 0;
+let placedDots = new Array(BINS.length).fill(0); // 0–12
+let checked = false;
+let sportScores = []; // {correct, total} per sport
+let reflectionAnswers = [];
+let reflectionCorrect = [];
+let highlightedSport = null;
+
+// ══════════════════════════════════════════════
+//  PLOT CONSTANTS
+// ══════════════════════════════════════════════
+const SVG_W = 620, SVG_H = 370;
+const MARGIN = { top: 30, right: 20, bottom: 72, left: 46 };
+const PLOT_W = SVG_W - MARGIN.left - MARGIN.right;
+const PLOT_H = SVG_H - MARGIN.top - MARGIN.bottom;
+const MAX_Y = 12;
+const NUM_BINS = BINS.length;
+
+function binX(i) {
+  // Center x for bin i
+  return MARGIN.left + (i + 0.5) * (PLOT_W / NUM_BINS);
+}
+function freqY(f) {
+  return MARGIN.top + PLOT_H - (f / MAX_Y) * PLOT_H;
+}
+function yFromSVG(svgY) {
+  // Map raw SVG y coordinate to frequency (0–MAX_Y), snapped
+  const relY = svgY - MARGIN.top;
+  const raw = (1 - relY / PLOT_H) * MAX_Y;
+  return Math.max(0, Math.min(MAX_Y, Math.round(raw)));
+}
+function binFromSVG(svgX) {
+  const relX = svgX - MARGIN.left;
+  const binW = PLOT_W / NUM_BINS;
+  return Math.floor(relX / binW);
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  currentSportIdx = 0;
+  sportScores = [];
+  document.getElementById('progress-bar-container').style.display = 'block';
+  loadSport(0);
+  showScreen('screen-sport');
+}
+
+function updateProgressBar() {
+  // Progress: 0% at start, 20%*n for each sport screen, 100% at comparison
+  const pct = ((currentSportIdx) / SPORTS.length) * 80 + 5;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function nextSport() {
+  currentSportIdx++;
+  if (currentSportIdx >= SPORTS.length) {
+    // Go to comparison
+    document.getElementById('progress-bar').style.width = '100%';
+    buildComparisonChart();
+    buildReflectionQuestions();
+    showScreen('screen-comparison');
+  } else {
+    loadSport(currentSportIdx);
+  }
+}
+
+function playAgain() {
+  currentSportIdx = 0;
+  sportScores = [];
+  reflectionAnswers = new Array(QUESTIONS.length).fill(null);
+  reflectionCorrect = new Array(QUESTIONS.length).fill(false);
+  highlightedSport = null;
+  document.getElementById('progress-bar-container').style.display = 'none';
+  document.getElementById('progress-bar').style.width = '0%';
+  showScreen('screen-welcome');
+}
+
+// ══════════════════════════════════════════════
+//  SPORT SCREEN SETUP
+// ══════════════════════════════════════════════
+function loadSport(idx) {
+  placedDots = new Array(BINS.length).fill(0);
+  checked = false;
+
+  const sport = SPORTS[idx];
+  updateProgressBar();
+
+  document.getElementById('sport-emoji').textContent = sport.emoji;
+  document.getElementById('sport-name').textContent = sport.name;
+  document.getElementById('sport-progress-badge').textContent = `Sport ${idx+1} of 4`;
+  document.getElementById('sport-description').textContent = sport.description;
+
+  // Age chips
+  const chips = document.getElementById('age-chips-container');
+  chips.innerHTML = '';
+  sport.ages.forEach(a => {
+    const chip = document.createElement('span');
+    chip.className = 'age-chip';
+    chip.textContent = a;
+    chip.style.background = sport.color + '22';
+    chip.style.color = sport.color;
+    chips.appendChild(chip);
+  });
+
+  // Tally table
+  const tbody = document.getElementById('tally-tbody');
+  tbody.innerHTML = '';
+  BINS.forEach((bin, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${bin}</td><td style="color:#a0aec0;font-style:italic">fill in →</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Check result reset
+  const cr = document.getElementById('check-result');
+  cr.classList.remove('visible');
+  cr.style.background = '';
+  cr.style.borderLeft = '';
+
+  document.getElementById('btn-next').style.display = 'none';
+
+  // Draw the SVG plot
+  renderPlot();
+}
+
+// ══════════════════════════════════════════════
+//  SVG PLOT RENDERING
+// ══════════════════════════════════════════════
+function renderPlot() {
+  const svg = document.getElementById('plot-svg');
+  svg.innerHTML = '';
+
+  const sport = SPORTS[currentSportIdx];
+  const color = sport.color;
+
+  // ── Background ──
+  rect(svg, MARGIN.left, MARGIN.top, PLOT_W, PLOT_H, '#f8fafc', '#e2e8f0', 1);
+
+  // ── Column hover zones ──
+  for (let i = 0; i < NUM_BINS; i++) {
+    const x = MARGIN.left + i * (PLOT_W / NUM_BINS);
+    const colRect = svgEl('rect', {
+      x, y: MARGIN.top,
+      width: PLOT_W / NUM_BINS,
+      height: PLOT_H,
+      fill: 'transparent',
+      'data-bin': i,
+      class: 'col-zone',
+      style: 'cursor:crosshair'
+    });
+    svg.appendChild(colRect);
+  }
+
+  // ── Y gridlines and labels ──
+  for (let y = 0; y <= MAX_Y; y++) {
+    const py = freqY(y);
+    if (y > 0) {
+      line(svg, MARGIN.left, py, MARGIN.left + PLOT_W, py,
+        y % 2 === 0 ? '#d1d5db' : '#e9ecef', y % 2 === 0 ? 1.2 : 0.7);
+    }
+    if (y % 2 === 0 || y === 1) {
+      text(svg, MARGIN.left - 6, py + 4, y, {
+        'text-anchor': 'end', 'font-size': '11', fill: '#718096'
+      });
+    }
+  }
+
+  // ── X gridlines (column dividers) ──
+  for (let i = 0; i <= NUM_BINS; i++) {
+    const px = MARGIN.left + i * (PLOT_W / NUM_BINS);
+    line(svg, px, MARGIN.top, px, MARGIN.top + PLOT_H, '#e2e8f0', 0.8);
+  }
+
+  // ── Axes ──
+  line(svg, MARGIN.left, MARGIN.top, MARGIN.left, MARGIN.top + PLOT_H, '#94a3b8', 1.5);
+  line(svg, MARGIN.left, MARGIN.top + PLOT_H, MARGIN.left + PLOT_W, MARGIN.top + PLOT_H, '#94a3b8', 1.5);
+
+  // ── X axis labels ──
+  for (let i = 0; i < NUM_BINS; i++) {
+    const cx = binX(i);
+    const t = svgEl('text', {
+      x: cx, y: MARGIN.top + PLOT_H + 14,
+      'text-anchor': 'end',
+      'font-size': '10',
+      fill: '#4a5568',
+      transform: `rotate(-40, ${cx}, ${MARGIN.top + PLOT_H + 14})`
+    });
+    t.textContent = BINS[i];
+    svg.appendChild(t);
+  }
+
+  // ── Axis titles ──
+  const xTitle = svgEl('text', {
+    x: MARGIN.left + PLOT_W / 2,
+    y: SVG_H - 4,
+    'text-anchor': 'middle',
+    'font-size': '12',
+    fill: '#4a5568',
+    'font-style': 'italic'
+  });
+  xTitle.textContent = 'Age Bin';
+  svg.appendChild(xTitle);
+
+  const yTitle = svgEl('text', {
+    x: 12,
+    y: MARGIN.top + PLOT_H / 2,
+    'text-anchor': 'middle',
+    'font-size': '12',
+    fill: '#4a5568',
+    'font-style': 'italic',
+    transform: `rotate(-90, 12, ${MARGIN.top + PLOT_H / 2})`
+  });
+  yTitle.textContent = 'Frequency';
+  svg.appendChild(yTitle);
+
+  // ── Ghost bar (shows where you'd set the bar height) ──
+  const ghostBar = svgEl('rect', {
+    id: 'ghost-bar',
+    x: -999, y: -999,
+    width: PLOT_W / NUM_BINS - 4,
+    height: 0,
+    fill: color + '44',
+    stroke: color + '88',
+    'stroke-width': '1.5',
+    'stroke-dasharray': '4,2',
+    'pointer-events': 'none'
+  });
+  svg.appendChild(ghostBar);
+
+  const ghostLabel = svgEl('text', {
+    id: 'ghost-label',
+    x: -999, y: -999,
+    'text-anchor': 'middle',
+    'font-size': '10',
+    fill: color,
+    'font-weight': '700',
+    'pointer-events': 'none'
+  });
+  svg.appendChild(ghostLabel);
+
+  // ── Lines group (drawn lines) ──
+  const linesGroup = svgEl('g', { id: 'lines-group' });
+  svg.appendChild(linesGroup);
+
+  // ── Dots group ──
+  const dotsGroup = svgEl('g', { id: 'dots-group' });
+  svg.appendChild(dotsGroup);
+
+  // ── Correct dots group (shown after check) ──
+  const correctGroup = svgEl('g', { id: 'correct-group' });
+  svg.appendChild(correctGroup);
+
+  // ── Event listeners ──
+  svg.addEventListener('mousemove', onPlotMouseMove);
+  svg.addEventListener('mouseleave', onPlotMouseLeave);
+  svg.addEventListener('click', onPlotClick);
+
+  // Restore bars
+  redrawBars();
+}
+
+function onPlotMouseMove(e) {
+  if (checked) return;
+  const sport = SPORTS[currentSportIdx];
+  const svgRect = e.currentTarget.getBoundingClientRect();
+  const svgX = (e.clientX - svgRect.left) * (SVG_W / svgRect.width);
+  const svgY = (e.clientY - svgRect.top) * (SVG_H / svgRect.height);
+
+  const binIdx = binFromSVG(svgX);
+  if (binIdx < 0 || binIdx >= NUM_BINS) {
+    clearGhost(); return;
+  }
+  const freq = yFromSVG(svgY);
+  const binW = PLOT_W / NUM_BINS;
+  const barPad = 2;
+  const bx = MARGIN.left + binIdx * binW + barPad;
+  const bw = binW - 2 * barPad;
+  const bh = (freq / MAX_Y) * PLOT_H;
+  const by = freqY(freq);
+
+  const gb = document.getElementById('ghost-bar');
+  const gl = document.getElementById('ghost-label');
+  if (gb) {
+    gb.setAttribute('x', bx);
+    gb.setAttribute('y', by);
+    gb.setAttribute('width', bw);
+    gb.setAttribute('height', Math.max(bh, 0));
+  }
+  if (gl) {
+    gl.setAttribute('x', bx + bw / 2);
+    gl.setAttribute('y', freq > 0 ? by - 4 : by - 8);
+    gl.textContent = freq;
+  }
+}
+
+function onPlotMouseLeave() { clearGhost(); }
+
+function clearGhost() {
+  const gb = document.getElementById('ghost-bar');
+  const gl = document.getElementById('ghost-label');
+  if (gb) { gb.setAttribute('x', -999); gb.setAttribute('y', -999); gb.setAttribute('height', 0); }
+  if (gl) { gl.setAttribute('x', -999); gl.setAttribute('y', -999); }
+}
+
+function onPlotClick(e) {
+  if (checked) return;
+  const svgRect = e.currentTarget.getBoundingClientRect();
+  const svgX = (e.clientX - svgRect.left) * (SVG_W / svgRect.width);
+  const svgY = (e.clientY - svgRect.top) * (SVG_H / svgRect.height);
+
+  const binIdx = binFromSVG(svgX);
+  if (binIdx < 0 || binIdx >= NUM_BINS) return;
+  if (svgY < MARGIN.top || svgY > MARGIN.top + PLOT_H) return;
+
+  const freq = yFromSVG(svgY);
+
+  // Toggle: clicking the same height resets bar to 0
+  if (placedDots[binIdx] === freq) {
+    placedDots[binIdx] = 0;
+  } else {
+    placedDots[binIdx] = freq;
+  }
+
+  redrawBars();
+}
+
+function redrawBars() {
+  const dg = document.getElementById('dots-group');
+  if (!dg) return;
+  dg.innerHTML = '';
+  const sport = SPORTS[currentSportIdx];
+  const binW = PLOT_W / NUM_BINS;
+  const barPad = 2;
+  placedDots.forEach((freq, i) => {
+    const x = MARGIN.left + i * binW + barPad;
+    const barH = (freq / MAX_Y) * PLOT_H;
+    const y = freqY(freq);
+    const w = binW - 2 * barPad;
+    const r = svgEl('rect', {
+      x, y,
+      width: w,
+      height: Math.max(barH, 0),
+      fill: sport.color + 'cc',
+      stroke: sport.color,
+      'stroke-width': '1.5',
+      style: 'cursor:pointer'
+    });
+    dg.appendChild(r);
+    if (freq > 0) {
+      const t = svgEl('text', {
+        x: x + w / 2, y: y - 4,
+        'text-anchor': 'middle',
+        'font-size': '11',
+        fill: sport.color,
+        'font-weight': '700'
+      });
+      t.textContent = freq;
+      dg.appendChild(t);
+    }
+  });
+}
+
+function resetPlot() {
+  placedDots = new Array(BINS.length).fill(0);
+  checked = false;
+  const cr = document.getElementById('check-result');
+  cr.classList.remove('visible');
+  document.getElementById('btn-next').style.display = 'none';
+  renderPlot();
+}
+
+function checkAnswer() {
+  checked = true;
+  const sport = SPORTS[currentSportIdx];
+  const correct = sport.frequencies;
+
+  let numCorrect = 0;
+  const details = [];
+
+  correct.forEach((cFreq, i) => {
+    const placed = placedDots[i];
+    if (placed === cFreq) {
+      numCorrect++;
+      details.push({ bin: BINS[i], placed, correct: cFreq, ok: true });
+    } else {
+      details.push({ bin: BINS[i], placed, correct: cFreq, ok: false });
+    }
+  });
+
+  sportScores.push({ correct: numCorrect, total: BINS.length });
+
+  // Show correct bars as dashed outlines where student was wrong
+  const cg = document.getElementById('correct-group');
+  if (cg) {
+    cg.innerHTML = '';
+    const binW = PLOT_W / NUM_BINS;
+    const barPad = 2;
+    correct.forEach((cFreq, i) => {
+      if (placedDots[i] !== cFreq) {
+        const bx = MARGIN.left + i * binW + barPad;
+        const bh = (cFreq / MAX_Y) * PLOT_H;
+        const by = freqY(cFreq);
+        const bw = binW - 2 * barPad;
+        const r = svgEl('rect', {
+          x: bx, y: by,
+          width: bw,
+          height: Math.max(bh, 0),
+          fill: sport.color + '22',
+          stroke: sport.color,
+          'stroke-width': '2',
+          'stroke-dasharray': '5,3',
+          opacity: '0.85'
+        });
+        cg.appendChild(r);
+        if (cFreq > 0) {
+          const t = svgEl('text', {
+            x: bx + bw / 2, y: by - 4,
+            'text-anchor': 'middle',
+            'font-size': '10',
+            fill: sport.color,
+            opacity: '0.9'
+          });
+          t.textContent = cFreq;
+          cg.appendChild(t);
+        }
+      }
+    });
+    redrawBars();
+  }
+
+  // Result display
+  const cr = document.getElementById('check-result');
+  cr.classList.add('visible');
+  cr.style.background = numCorrect >= 10 ? '#f0fff4' : numCorrect >= 7 ? '#fffbeb' : '#fff5f5';
+  cr.style.borderLeft = `4px solid ${numCorrect >= 10 ? '#68d391' : numCorrect >= 7 ? '#f6ad55' : '#fc8181'}`;
+
+  document.getElementById('check-score').textContent =
+    `${numCorrect}/${BINS.length} bins correct  ${numCorrect >= 11 ? '🌟' : numCorrect >= 8 ? '👍' : '📖'}`;
+
+  // Per-bin detail
+  const wrongBins = details.filter(d => !d.ok);
+  let detailHTML = '';
+  if (wrongBins.length === 0) {
+    detailHTML = '<span style="color:#276749;font-size:0.88rem;">Perfect! All bins correct.</span>';
+  } else {
+    detailHTML = '<span style="font-size:0.83rem;color:#4a5568;">Incorrect bins: </span>';
+    detailHTML += wrongBins.map(d =>
+      `<span style="font-size:0.82rem;color:#c05621;background:#fff3cd;padding:2px 6px;border-radius:4px;margin:2px;display:inline-block;">
+        ${d.bin}: you set ${d.placed}, correct is ${d.correct}
+      </span>`
+    ).join('');
+  }
+  document.getElementById('check-bins-detail').innerHTML = detailHTML;
+  document.getElementById('distribution-note').innerHTML = sport.distributionNote;
+
+  // Show next button
+  const btnNext = document.getElementById('btn-next');
+  btnNext.style.display = 'inline-block';
+  if (currentSportIdx === SPORTS.length - 1) {
+    btnNext.textContent = 'Final Comparison →';
+  } else {
+    btnNext.textContent = 'Next Sport →';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  COMPARISON CHART
+// ══════════════════════════════════════════════
+function buildComparisonChart() {
+  const svg = document.getElementById('comp-svg');
+  const W = 840, H = 380;
+  const M = { top: 30, right: 30, bottom: 80, left: 50 };
+  const PW = W - M.left - M.right;
+  const PH = H - M.top - M.bottom;
+  const YMAX = 12;
+
+  svg.innerHTML = '';
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+
+  // Background
+  rect(svg, M.left, M.top, PW, PH, '#f8fafc', '#e2e8f0', 1, svg);
+
+  function cx(i) { return M.left + (i + 0.5) * (PW / NUM_BINS); }
+  function cy(f) { return M.top + PH - (f / YMAX) * PH; }
+
+  // Gridlines
+  for (let y = 0; y <= YMAX; y += 2) {
+    const py = cy(y);
+    const l = svgEl('line', { x1: M.left, y1: py, x2: M.left + PW, y2: py, stroke: '#d1d5db', 'stroke-width': '1' });
+    svg.appendChild(l);
+    const t = svgEl('text', { x: M.left - 6, y: py + 4, 'text-anchor': 'end', 'font-size': '11', fill: '#718096' });
+    t.textContent = y;
+    svg.appendChild(t);
+  }
+  for (let i = 0; i <= NUM_BINS; i++) {
+    const px = M.left + i * (PW / NUM_BINS);
+    svg.appendChild(svgEl('line', { x1: px, y1: M.top, x2: px, y2: M.top + PH, stroke: '#e2e8f0', 'stroke-width': '0.7' }));
+  }
+
+  // Axes
+  svg.appendChild(svgEl('line', { x1: M.left, y1: M.top, x2: M.left, y2: M.top + PH, stroke: '#94a3b8', 'stroke-width': '1.5' }));
+  svg.appendChild(svgEl('line', { x1: M.left, y1: M.top + PH, x2: M.left + PW, y2: M.top + PH, stroke: '#94a3b8', 'stroke-width': '1.5' }));
+
+  // X labels
+  for (let i = 0; i < NUM_BINS; i++) {
+    const x = cx(i);
+    const t = svgEl('text', {
+      x, y: M.top + PH + 14,
+      'text-anchor': 'end', 'font-size': '10', fill: '#4a5568',
+      transform: `rotate(-40, ${x}, ${M.top + PH + 14})`
+    });
+    t.textContent = BINS[i];
+    svg.appendChild(t);
+  }
+
+  // Axis labels
+  const xLbl = svgEl('text', { x: M.left + PW / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': '12', fill: '#4a5568', 'font-style': 'italic' });
+  xLbl.textContent = 'Age Bin';
+  svg.appendChild(xLbl);
+  const yLbl = svgEl('text', { x: 13, y: M.top + PH / 2, 'text-anchor': 'middle', 'font-size': '12', fill: '#4a5568', 'font-style': 'italic', transform: `rotate(-90, 13, ${M.top + PH / 2})` });
+  yLbl.textContent = 'Frequency';
+  svg.appendChild(yLbl);
+
+  // Draw each sport as overlapping translucent bars, grouped for opacity toggling
+  highlightedSport = null;
+  SPORTS.forEach((sport, si) => {
+    const g = svgEl('g', { id: `comp-hist-${si}`, opacity: '0.28' });
+    const binW = PW / NUM_BINS;
+    const barPad = 1;
+    sport.frequencies.forEach((f, i) => {
+      const bx = M.left + i * binW + barPad;
+      const bh = (f / YMAX) * PH;
+      const by = cy(f);
+      const bw = binW - 2 * barPad;
+      g.appendChild(svgEl('rect', {
+        x: bx, y: by,
+        width: bw,
+        height: Math.max(bh, 0),
+        fill: sport.color,
+        stroke: sport.color,
+        'stroke-width': '1.2'
+      }));
+    });
+    svg.appendChild(g);
+  });
+
+  // Legend
+  const legend = document.getElementById('comp-legend');
+  legend.innerHTML = '';
+  SPORTS.forEach((s, si) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.id = `comp-legend-item-${si}`;
+    item.style.color = s.color;
+    item.innerHTML = `
+      <div class="legend-swatch" style="background:${s.color}"></div>
+      <span>${s.emoji} ${s.name}</span>
+    `;
+    item.addEventListener('click', () => toggleHighlight(si));
+    legend.appendChild(item);
+  });
+}
+
+function toggleHighlight(si) {
+  if (highlightedSport === si) {
+    // Unclick: restore all to default low opacity
+    highlightedSport = null;
+    SPORTS.forEach((_, i) => {
+      const g = document.getElementById(`comp-hist-${i}`);
+      if (g) g.setAttribute('opacity', '0.28');
+      const item = document.getElementById(`comp-legend-item-${i}`);
+      if (item) { item.classList.remove('legend-active', 'legend-dimmed'); }
+    });
+  } else {
+    // Highlight selected, dim others
+    highlightedSport = si;
+    SPORTS.forEach((_, i) => {
+      const g = document.getElementById(`comp-hist-${i}`);
+      if (g) g.setAttribute('opacity', i === si ? '0.88' : '0.1');
+      const item = document.getElementById(`comp-legend-item-${i}`);
+      if (item) {
+        item.classList.toggle('legend-active', i === si);
+        item.classList.toggle('legend-dimmed', i !== si);
+      }
+    });
+  }
+}
+
+// ══════════════════════════════════════════════
+//  REFLECTION QUESTIONS
+// ══════════════════════════════════════════════
+const QUESTIONS = [
+  {
+    type: 'table',
+    rows: [
+      { sport: "🤸 Gymnastics",    min: "14–16", max: "23–25", mode: "17–19" },
+      { sport: "🏊 Swimming",      min: "17–19", max: "26–28", mode: "20–22" },
+      { sport: "🏋️ Weightlifting", min: "20–22", max: "35–37", mode: "26–28" },
+      { sport: "🐴 Dressage",      min: "29–31", max: "50–52", mode: "38–40" },
+      { sport: "⛵ Sailing",        min: "20–22", max: "44–46", mode: "29–31" },
+      { sport: "🎯 Trap Shooting",  min: "29–31", max: "50–52", mode: "44–46" },
+    ]
+  },
+  {
+    text: "Which sport has the <strong>youngest</strong> peak age distribution?",
+    options: ["Women's Artistic Gymnastics", "Men's 200m Freestyle Swimming", "Men's Olympic Weightlifting", "Equestrian Dressage", "Olympic Sailing", "Olympic Trap Shooting"],
+    correctIdx: 0,
+    explanation: "Correct! Women's Artistic Gymnastics peaks at the 17–19 bin with 9 athletes and has nearly all athletes under 23."
+  },
+  {
+    text: "Which sport has the <strong>widest spread</strong> of ages (highest range)?",
+    options: ["Women's Artistic Gymnastics", "Men's 200m Freestyle Swimming", "Men's Olympic Weightlifting", "Equestrian Dressage", "Olympic Sailing", "Olympic Trap Shooting"],
+    correctIdx: 4,
+    explanation: "Correct! Olympic Sailing spans from age 22 to 45 — a range of 23 years. Equestrian Dressage is close (30 to 52, range 22), but Sailing edges it out."
+  },
+  {
+    text: "Which sport's distribution is most clearly <strong>skewed left</strong> (peak at older ages, thin tail toward younger)?",
+    options: ["Women's Artistic Gymnastics", "Men's 200m Freestyle Swimming", "Men's Olympic Weightlifting", "Equestrian Dressage", "Olympic Sailing", "Olympic Trap Shooting"],
+    correctIdx: 5,
+    explanation: "Correct! Olympic Trap Shooting peaks at 44–46 and has a long left tail reaching back to age 30. The bulk of athletes are in their 40s, with very few younger competitors — the hallmark of a left-skewed distribution."
+  },
+];
+
+function buildReflectionQuestions() {
+  reflectionAnswers = new Array(QUESTIONS.length).fill(null);
+  reflectionCorrect = new Array(QUESTIONS.length).fill(false);
+
+  const container = document.getElementById('reflection-questions');
+  container.innerHTML = '';
+
+  QUESTIONS.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `q-card-${qi}`;
+
+    if (q.type === 'table') {
+      const binOptions = BINS.map(b => `<option value="${b}">${b}</option>`).join('');
+      const rowsHTML = q.rows.map((row, ri) => `
+        <tr>
+          <td>${row.sport}</td>
+          <td><select id="tbl-${qi}-${ri}-min"><option value="">–</option>${binOptions}</select></td>
+          <td><select id="tbl-${qi}-${ri}-max"><option value="">–</option>${binOptions}</select></td>
+          <td><select id="tbl-${qi}-${ri}-mode"><option value="">–</option>${binOptions}</select></td>
+        </tr>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="vocab-box">
+          <strong>Minimum (Min)</strong> — the bin containing the smallest age in the data set.<br>
+          <strong>Maximum (Max)</strong> — the bin containing the largest age in the data set.<br>
+          The <strong>range</strong> spans from the minimum bin to the maximum bin — the further apart they are, the wider the spread.<br>
+          <strong>Mode (Modal bin)</strong> — the bin with the tallest bar, where most athletes are concentrated.
+        </div>
+        <div class="q-text">${qi + 1}. Use your histograms to complete the table below.</div>
+        <div style="overflow-x:auto">
+          <table class="stat-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Sport</th>
+                <th colspan="2" class="group-header">Range</th>
+                <th rowspan="2">Modal Bin</th>
+              </tr>
+              <tr>
+                <th>Min</th>
+                <th>Max</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHTML}</tbody>
+          </table>
+        </div>
+        <button class="btn-check-table" id="btn-check-table-${qi}" onclick="checkTable(${qi})">Check Table</button>
+        <div class="q-feedback" id="q-feedback-${qi}"></div>
+      `;
+    } else {
+      const optionsHTML = q.options.map((opt, oi) =>
+        `<button class="q-option" id="q-${qi}-opt-${oi}" onclick="answerQuestion(${qi}, ${oi})">${opt}</button>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="q-text">${qi + 1}. ${q.text}</div>
+        <div class="q-options">${optionsHTML}</div>
+        <div class="q-feedback" id="q-feedback-${qi}"></div>
+      `;
+    }
+    container.appendChild(card);
+  });
+
+  document.getElementById('btn-see-results').classList.remove('visible');
+  document.getElementById('final-results').classList.remove('visible');
+}
+
+function answerQuestion(qi, chosenIdx) {
+  if (reflectionAnswers[qi] !== null) return; // Already answered
+
+  reflectionAnswers[qi] = chosenIdx;
+  const q = QUESTIONS[qi];
+  const isCorrect = chosenIdx === q.correctIdx;
+  reflectionCorrect[qi] = isCorrect;
+
+  // Style options
+  for (let oi = 0; oi < q.options.length; oi++) {
+    const btn = document.getElementById(`q-${qi}-opt-${oi}`);
+    btn.classList.add('answered');
+    btn.style.pointerEvents = 'none';
+    if (oi === q.correctIdx) btn.classList.add('revealed-correct');
+    if (oi === chosenIdx && !isCorrect) btn.classList.add('incorrect');
+    if (oi === chosenIdx && isCorrect) btn.classList.add('correct');
+  }
+
+  // Show feedback
+  const fb = document.getElementById(`q-feedback-${qi}`);
+  fb.classList.add('visible');
+  if (isCorrect) {
+    fb.classList.add('correct-fb');
+    fb.innerHTML = '✓ ' + q.explanation;
+  } else {
+    fb.classList.add('incorrect-fb');
+    fb.innerHTML = `✗ Not quite. ${q.explanation}`;
+  }
+
+  // Check if all answered
+  if (reflectionAnswers.every(a => a !== null)) {
+    document.getElementById('btn-see-results').classList.add('visible');
+  }
+}
+
+function checkTable(qi) {
+  if (reflectionAnswers[qi] !== null) return;
+
+  const q = QUESTIONS[qi];
+  let allCorrect = true;
+
+  q.rows.forEach((row, ri) => {
+    const fields  = ['min', 'max', 'mode'];
+    const correct = [row.min, row.max, row.mode];
+
+    fields.forEach((field, fi) => {
+      const el = document.getElementById(`tbl-${qi}-${ri}-${field}`);
+      if (!el) return;
+      const ok = el.value === correct[fi];
+      if (!ok) allCorrect = false;
+      el.classList.add(ok ? 'cell-correct' : 'cell-wrong');
+      el.disabled = true;
+    });
+  });
+
+  reflectionAnswers[qi] = true;
+  reflectionCorrect[qi] = allCorrect;
+
+  const btn = document.getElementById(`btn-check-table-${qi}`);
+  if (btn) btn.disabled = true;
+
+  const fb = document.getElementById(`q-feedback-${qi}`);
+  fb.classList.add('visible');
+  if (allCorrect) {
+    fb.classList.add('correct-fb');
+    fb.innerHTML = '✓ Perfect! All values correct.';
+  } else {
+    fb.classList.add('incorrect-fb');
+    fb.innerHTML = '✗ Some values are incorrect — check the highlighted cells. Correct answers are shown in green.';
+    // Reveal correct answers in wrong cells
+    q.rows.forEach((row, ri) => {
+      const fields  = ['min', 'max', 'mode'];
+      const correct = [row.min, row.max, row.mode];
+      fields.forEach((field, fi) => {
+        const el = document.getElementById(`tbl-${qi}-${ri}-${field}`);
+        if (el && el.classList.contains('cell-wrong')) {
+          el.value = correct[fi];
+          el.classList.replace('cell-wrong', 'cell-correct');
+        }
+      });
+    });
+  }
+
+  if (reflectionAnswers.every(a => a !== null)) {
+    document.getElementById('btn-see-results').classList.add('visible');
+  }
+}
+
+function showFinalResults() {
+  document.getElementById('btn-see-results').classList.remove('visible');
+  const resultsDiv = document.getElementById('final-results');
+  resultsDiv.classList.add('visible');
+
+  // Calculate total score
+  const sportTotal = sportScores.reduce((a, b) => a + b.correct, 0);
+  const sportMax = sportScores.reduce((a, b) => a + b.total, 0);
+  const reflTotal = reflectionCorrect.filter(Boolean).length;
+
+  document.getElementById('final-score-display').innerHTML =
+    `Histograms: ${sportTotal}/${sportMax} &nbsp;|&nbsp; Questions: ${reflTotal}/${QUESTIONS.length}`;
+
+  document.getElementById('progress-bar').style.width = '100%';
+
+  // Scroll to results
+  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ══════════════════════════════════════════════
+//  SECRET PROGRESS BAR NAVIGATION
+// ══════════════════════════════════════════════
+document.getElementById('progress-bar-container').addEventListener('click', function(e) {
+  const pct = (e.clientX - this.getBoundingClientRect().left) / this.offsetWidth;
+  if (pct < 0.2) {
+    currentSportIdx = 0; loadSport(0); showScreen('screen-sport');
+  } else if (pct < 0.4) {
+    currentSportIdx = 1; loadSport(1); showScreen('screen-sport');
+  } else if (pct < 0.6) {
+    currentSportIdx = 2; loadSport(2); showScreen('screen-sport');
+  } else if (pct < 0.8) {
+    currentSportIdx = 3; loadSport(3); showScreen('screen-sport');
+  } else {
+    document.getElementById('progress-bar').style.width = '100%';
+    buildComparisonChart(); buildReflectionQuestions();
+    showScreen('screen-comparison');
+  }
+});
+
+// ══════════════════════════════════════════════
+//  SVG HELPERS
+// ══════════════════════════════════════════════
+function svgEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+  return el;
+}
+
+function rect(parent, x, y, w, h, fill, stroke, sw) {
+  const el = svgEl('rect', { x, y, width: w, height: h, fill, stroke, 'stroke-width': sw });
+  parent.appendChild(el);
+  return el;
+}
+
+function line(parent, x1, y1, x2, y2, stroke, sw) {
+  const el = svgEl('line', { x1, y1, x2, y2, stroke, 'stroke-width': sw });
+  parent.appendChild(el);
+  return el;
+}
+
+function text(parent, x, y, content, attrs) {
+  const el = svgEl('text', { x, y, ...attrs });
+  el.textContent = content;
+  parent.appendChild(el);
+  return el;
+}
+</script>
+</body>
+</html>
