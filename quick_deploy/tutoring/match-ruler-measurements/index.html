@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Measurement Matching!</title>
+  <style>
+    :root {
+      --bg:              #FFF9EC;
+      --card-bg:         #FFFFFF;
+      --card-border:     #4A90D9;
+      --label-bg:        #FFF3B0;
+      --label-border:    #E07B00;
+      --matched-bg:      #A8E6A3;
+      --matched-border:  #2E7D32;
+      --wrong-bg:        #FFCDD2;
+      --wrong-border:    #C62828;
+      --dragover-bg:     #D1ECF1;
+      --dragover-border: #0288D1;
+      --header-bg:       #4A90D9;
+      --orange:          #FF6B35;
+      --text-dark:       #2C3E50;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, #cfc0a0 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive;
+      min-height: 100vh;
+      padding: 16px 16px 32px;
+    }
+
+    #game-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--header-bg);
+      border-radius: 20px;
+      padding: 16px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 14px rgba(74,144,217,.4);
+      color: #fff;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      text-align: center;
+      text-shadow: 2px 2px 0 rgba(0,0,0,.18);
+      margin-bottom: 12px;
+    }
+
+    #progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #progress-track {
+      flex: 1;
+      height: 16px;
+      background: rgba(255,255,255,.3);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #81C784, #43A047);
+      border-radius: 8px;
+      transition: width .5s ease;
+    }
+
+    #progress-text {
+      font-size: 1rem;
+      font-weight: bold;
+      white-space: nowrap;
+      min-width: 120px;
+      text-align: right;
+    }
+
+    /* ── Board ── */
+    #game-board {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      min-height: calc(100vh - 160px); /* fill remaining viewport so labels-col can center */
+    }
+
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #images-col { align-self: flex-start; }
+    #labels-col { align-self: stretch; }
+
+    /* Inner wrap: centers the label cards vertically with extra spacing */
+    .labels-cards-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 48px;
+    }
+
+    .col-header {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      padding: 6px 12px;
+      background: rgba(255,255,255,.75);
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+
+    /* ── Image cards ── */
+    .image-card {
+      background: var(--card-bg);
+      border: 3px solid var(--card-border);
+      border-radius: 16px;
+      padding: 10px;
+      min-height: 270px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+      touch-action: auto;       /* allow page scroll; drag locks it in pointermove */
+      transition: transform .15s, box-shadow .15s, background-color .2s, border-color .2s;
+      box-shadow: 0 3px 8px rgba(0,0,0,.1);
+      position: relative;
+    }
+
+    .image-card:hover:not(.matched):not(.dragging) {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 18px rgba(74,144,217,.3);
+    }
+
+    .image-card img {
+      width: 100%;
+      max-height: 248px;
+      object-fit: contain;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    .image-card.selected {
+      border-color: var(--orange);
+      border-width: 4px;
+      transform: scale(1.06);
+      box-shadow: 0 8px 22px rgba(255,107,53,.4);
+    }
+
+    .image-card.dragging {
+      opacity: .35;
+      cursor: grabbing;
+    }
+
+    /* Matched checkmark badge */
+    .image-card.matched::after {
+      content: '✓';
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 1.1rem;
+      color: var(--matched-border);
+      font-weight: bold;
+    }
+
+    /* ── Label cards ── */
+    .label-card {
+      background: var(--label-bg);
+      border: 3px solid var(--label-border);
+      border-radius: 16px;
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      transition: transform .15s, box-shadow .15s, background-color .2s, border-color .2s;
+      box-shadow: 0 3px 8px rgba(0,0,0,.1);
+    }
+
+    .label-card:hover:not(.matched) {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 18px rgba(224,123,0,.3);
+    }
+
+    .label-card.drag-over:not(.matched) {
+      background: var(--dragover-bg);
+      border-color: var(--dragover-border);
+      border-style: dashed;
+      transform: scale(1.04);
+      box-shadow: 0 8px 22px rgba(2,136,209,.25);
+    }
+
+    /* ── Shared matched / wrong states ── */
+    .image-card.matched,
+    .label-card.matched {
+      background: var(--matched-bg);
+      border-color: var(--matched-border);
+      cursor: default;
+    }
+
+    .image-card.wrong,
+    .label-card.wrong {
+      background: var(--wrong-bg);
+      border-color: var(--wrong-border);
+    }
+
+    /* ── Focus ring (keyboard nav) ── */
+    .image-card:focus-visible,
+    .label-card:focus-visible {
+      outline: 4px solid var(--orange);
+      outline-offset: 3px;
+    }
+
+    /* ── Animations ── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-9px); }
+      40%      { transform: translateX(9px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.12); }
+      70%  { transform: scale(.96); }
+      100% { transform: scale(1); }
+    }
+
+    .shake { animation: shake .45s ease; }
+    .pop   { animation: pop .35s ease; }
+
+    /* ── Drag ghost ── */
+    .drag-ghost {
+      position: fixed !important;
+      pointer-events: none !important;
+      z-index: 9999;
+      opacity: .88;
+      transform: rotate(4deg) scale(1.08) !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.28) !important;
+      transition: none !important;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-weight: bold;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .btn:active { transform: scale(.96) !important; }
+
+    #restart-btn {
+      background: var(--orange);
+      color: #fff;
+      padding: 14px 36px;
+      font-size: 1.2rem;
+      box-shadow: 0 5px 14px rgba(255,107,53,.4);
+      text-shadow: 1px 1px 0 rgba(0,0,0,.15);
+    }
+
+    #restart-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 9px 22px rgba(255,107,53,.5);
+    }
+
+    /* ── Celebration overlay ── */
+    #celebration {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    #celebration.hidden { display: none; }
+
+    #celebration-box {
+      background: #fff;
+      border-radius: 28px;
+      padding: 48px 56px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 24px 64px rgba(0,0,0,.32);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Rainbow top bar */
+    #celebration-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #FF6B35, #FFD700, #4CAF50, #4A90D9, #9B59B6);
+    }
+
+    .cele-stars   { font-size: 2.8rem; margin-bottom: 12px; }
+    #celebration-box h2 { font-size: 2.4rem; color: var(--text-dark); margin-bottom: 8px; }
+    #celebration-box p  { font-size: 1.25rem; color: #555; margin-bottom: 28px; }
+
+    #play-again-btn {
+      background: linear-gradient(135deg, #4A90D9, #5BAEFC);
+      color: #fff;
+      padding: 16px 48px;
+      font-size: 1.3rem;
+      box-shadow: 0 6px 20px rgba(74,144,217,.4);
+      text-shadow: 1px 1px 0 rgba(0,0,0,.15);
+    }
+
+    #play-again-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 10px 28px rgba(74,144,217,.5);
+    }
+
+    /* ── Fraction display ── */
+    .mixed-number {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      line-height: 1;
+    }
+
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: .6em;
+      line-height: 1.15;
+      vertical-align: middle;
+    }
+
+    .frac .num {
+      border-bottom: 2.5px solid currentColor;
+      padding: 0 3px 1px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .frac .den {
+      padding: 1px 3px 0;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── Confetti ── */
+    .confetti-piece {
+      position: fixed;
+      top: -20px;
+      pointer-events: none;
+      z-index: 99;
+      animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+      0%   { transform: translateY(0)      rotate(0deg);   opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translateY(110vh)  rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header h1         { font-size: 1.4rem; }
+      #game-board       { gap: 10px; }
+      .image-card       { min-height: 203px; padding: 8px; }
+      .image-card img   { max-height: 180px; }
+      .label-card       { min-height: 68px; font-size: 1.5rem; }
+      .col-header       { font-size: .85rem; }
+      #progress-text    { font-size: .85rem; min-width: 100px; }
+      #celebration-box  { padding: 32px 24px; }
+      #celebration-box h2 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <header>
+    <h1>📏 Measurement Matching!</h1>
+    <div id="progress-wrap">
+      <div id="progress-track"><div id="progress-bar"></div></div>
+      <div id="progress-text">0 of 8 matched!</div>
+    </div>
+  </header>
+
+  <main id="game-board">
+    <div id="images-col" class="column">
+      <div class="col-header">🖼️ Objects</div>
+    </div>
+    <div id="labels-col" class="column">
+      <div class="col-header">📐 Measurements</div>
+    </div>
+  </main>
+
+  <footer>
+    <button id="restart-btn" class="btn">🔄 Try Again!</button>
+  </footer>
+</div>
+
+<!-- Celebration overlay -->
+<div id="celebration" class="hidden">
+  <div id="celebration-box">
+    <div class="cele-stars">⭐ 🌟 ⭐</div>
+    <h2>Amazing Job!</h2>
+    <p>You matched all 8! 🎉</p>
+    <button id="play-again-btn" class="btn">Play Again!</button>
+  </div>
+</div>
+
+<script>
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const PAIRS = [
+    { id: 1, image: './babysitters_book_1_75.png', label: '1 3/4', alt: "babysitter's book" },
+    { id: 2, image: './lego_4_75.png',             label: '4 3/4', alt: 'LEGO brick'        },
+    { id: 3, image: './notebook_3.png',            label: '3',     alt: 'notebook'           },
+    { id: 4, image: './pencil_6_25.png',           label: '6 1/4', alt: 'pencil'            },
+    { id: 5, image: './scissors_3_75.png',         label: '3 3/4', alt: 'scissors'          },
+    { id: 6, image: './calculator_1_5.png',        label: '1 1/2', alt: 'calculator'        },
+    { id: 7, image: './pencil_5_5.png',            label: '5 1/2', alt: 'pencil'            },
+    { id: 8, image: './pokemon_1_3_4.png',         label: '1 3/4', alt: 'Pokémon card'      },
+  ];
+
+  // ── Game state ────────────────────────────────────────────────────────────
+  const state = {
+    matchedCount: 0,
+    selectedImageId: null,
+  };
+
+  // Unified pointer-drag state (covers both mouse and touch)
+  const drag = {
+    active:      false,
+    imageId:     null,
+    sourceCard:  null,
+    startX:      0,
+    startY:      0,
+    isDragging:  false,
+    ghostEl:     null,
+  };
+
+  // Prevents the label card's 'click' event from firing right after a drag drop
+  let dragJustEnded = false;
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getImageCard(id) {
+    return document.querySelector(`.image-card[data-id="${id}"]`);
+  }
+  function getLabelCard(id) {
+    return document.querySelector(`.label-card[data-id="${id}"]`);
+  }
+
+  // Returns the label card at screen coords (x, y), or null
+  function labelCardAt(x, y) {
+    // Temporarily hide ghost so it doesn't block elementFromPoint
+    if (drag.ghostEl) drag.ghostEl.style.visibility = 'hidden';
+    const el = document.elementFromPoint(x, y);
+    if (drag.ghostEl) drag.ghostEl.style.visibility = '';
+    return el ? el.closest('.label-card') : null;
+  }
+
+  // ── Init / render ─────────────────────────────────────────────────────────
+  function initGame() {
+    state.matchedCount  = 0;
+    state.selectedImageId = null;
+
+    // Clean up any in-progress drag
+    drag.active = false;
+    drag.isDragging = false;
+    if (drag.ghostEl) { drag.ghostEl.remove(); drag.ghostEl = null; }
+    document.querySelectorAll('.confetti-piece').forEach(p => p.remove());
+
+    renderColumn('images-col', shuffle(PAIRS), buildImageCard);
+    renderColumn('labels-col', shuffle(PAIRS), buildLabelCard, true);
+    updateProgress();
+    document.getElementById('celebration').classList.add('hidden');
+  }
+
+  function renderColumn(colId, pairs, buildFn, useWrap = false) {
+    const col = document.getElementById(colId);
+    const header = col.querySelector('.col-header'); // keep the static header
+    col.innerHTML = '';
+    col.appendChild(header);
+    let container = col;
+    if (useWrap) {
+      const wrap = document.createElement('div');
+      wrap.className = 'labels-cards-wrap';
+      wrap.id = 'labels-cards-wrap';
+      col.appendChild(wrap);
+      container = wrap;
+    }
+    pairs.forEach(pair => container.appendChild(buildFn(pair)));
+  }
+
+  function buildImageCard(pair) {
+    const card = document.createElement('div');
+    card.className = 'image-card';
+    card.dataset.id    = pair.id;
+    card.dataset.label = pair.label;
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${pair.alt} — drag to match`);
+
+    card.innerHTML = `<img src="${pair.image}" alt="${pair.alt}" draggable="false">`;
+
+    // Pointer down → start potential drag or click
+    card.addEventListener('pointerdown', onImagePointerDown);
+
+    // Keyboard support
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleImageClick(card);
+      }
+    });
+
+    return card;
+  }
+
+  // Converts "1 3/4" → HTML with a stacked fraction; "3" → plain "3"
+  function formatLabel(label) {
+    const parts = label.trim().split(' ');
+    if (parts.length === 1) {
+      // Whole number only (e.g. "3")
+      return `<span class="mixed-number">${parts[0]}</span>`;
+    }
+    const whole = parts[0];
+    const [num, den] = parts[1].split('/');
+    return `<span class="mixed-number">${whole}<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span></span>`;
+  }
+
+  function buildLabelCard(pair) {
+    const card = document.createElement('div');
+    card.className = 'label-card';
+    card.dataset.id    = pair.id;
+    card.dataset.label = pair.label;
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${pair.label} inches`);
+    card.innerHTML = formatLabel(pair.label);
+
+    // Click-to-match (also fires after touch tap)
+    card.addEventListener('click', () => {
+      if (dragJustEnded) { dragJustEnded = false; return; }
+      if (card.dataset.matched) return;
+      if (state.selectedImageId) {
+        attemptMatch(state.selectedImageId, card.dataset.id);
+      }
+    });
+
+    // Keyboard support
+    card.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && !card.dataset.matched && state.selectedImageId) {
+        e.preventDefault();
+        attemptMatch(state.selectedImageId, card.dataset.id);
+      }
+    });
+
+    return card;
+  }
+
+  // ── Pointer-event drag (unified mouse + touch) ────────────────────────────
+
+  function onImagePointerDown(e) {
+    const card = e.currentTarget;
+    if (card.dataset.matched) return;
+
+    drag.active     = true;
+    drag.imageId    = card.dataset.id;
+    drag.sourceCard = card;
+    drag.startX     = e.clientX;
+    drag.startY     = e.clientY;
+    drag.isDragging = false;
+  }
+
+  document.addEventListener('pointermove', e => {
+    if (!drag.active) return;
+
+    const dist = Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY);
+
+    // Threshold: 8px before we commit to drag mode
+    if (!drag.isDragging && dist > 8) {
+      drag.isDragging = true;
+      e.preventDefault(); // lock out scroll now that drag is confirmed
+      clearSelection();
+      drag.sourceCard.classList.add('dragging');
+
+      // Create a floating ghost clone
+      const ghost = drag.sourceCard.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width  = drag.sourceCard.offsetWidth + 'px';
+      ghost.style.left   = (e.clientX - drag.sourceCard.offsetWidth  / 2) + 'px';
+      ghost.style.top    = (e.clientY - drag.sourceCard.offsetHeight / 2) + 'px';
+      document.body.appendChild(ghost);
+      drag.ghostEl = ghost;
+    }
+
+    if (!drag.isDragging || !drag.ghostEl) return;
+    e.preventDefault(); // keep scroll locked while dragging
+
+    // Move ghost with pointer
+    drag.ghostEl.style.left = (e.clientX - drag.ghostEl.offsetWidth  / 2) + 'px';
+    drag.ghostEl.style.top  = (e.clientY - drag.ghostEl.offsetHeight / 2) + 'px';
+
+    // Highlight label card currently under the pointer
+    const lc = labelCardAt(e.clientX, e.clientY);
+    document.querySelectorAll('.label-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+    if (lc && !lc.dataset.matched) lc.classList.add('drag-over');
+  });
+
+  document.addEventListener('pointerup', e => {
+    if (!drag.active) return;
+
+    if (drag.isDragging) {
+      // ── Drop ──
+      const lc = labelCardAt(e.clientX, e.clientY);
+
+      // Tear down ghost before potential DOM changes
+      if (drag.ghostEl) { drag.ghostEl.remove(); drag.ghostEl = null; }
+      document.querySelectorAll('.label-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+      drag.sourceCard.classList.remove('dragging');
+
+      if (lc && !lc.dataset.matched) {
+        // Suppress the click event that might fire on the label card right after
+        dragJustEnded = true;
+        setTimeout(() => { dragJustEnded = false; }, 150);
+        attemptMatch(drag.imageId, lc.dataset.id);
+      }
+    } else {
+      // ── Click (pointer barely moved) ──
+      handleImageClick(drag.sourceCard);
+    }
+
+    drag.active     = false;
+    drag.imageId    = null;
+    drag.isDragging = false;
+    drag.sourceCard = null;
+  });
+
+  // Clean up if touch is cancelled by the OS (e.g. incoming call)
+  document.addEventListener('pointercancel', () => {
+    if (drag.ghostEl)   { drag.ghostEl.remove(); drag.ghostEl = null; }
+    if (drag.sourceCard) drag.sourceCard.classList.remove('dragging');
+    document.querySelectorAll('.label-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+    drag.active     = false;
+    drag.isDragging = false;
+    drag.sourceCard = null;
+  });
+
+  // ── Click-to-select logic ─────────────────────────────────────────────────
+
+  function handleImageClick(card) {
+    if (!card || card.dataset.matched) return;
+
+    if (state.selectedImageId === card.dataset.id) {
+      // Same card clicked again → deselect
+      card.classList.remove('selected');
+      state.selectedImageId = null;
+    } else {
+      clearSelection();
+      card.classList.add('selected');
+      state.selectedImageId = card.dataset.id;
+    }
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.image-card.selected').forEach(c => c.classList.remove('selected'));
+    state.selectedImageId = null;
+  }
+
+  // ── Match logic ───────────────────────────────────────────────────────────
+
+  function attemptMatch(imageId, labelId) {
+    const imageCard = getImageCard(imageId);
+    const labelCard = getLabelCard(labelId);
+    if (!imageCard || !labelCard) return;
+    if (imageCard.dataset.matched || labelCard.dataset.matched) return;
+
+    clearSelection();
+
+    // Value-based comparison: any "1 3/4" image can match any "1 3/4" label
+    if (imageCard.dataset.label === labelCard.dataset.label) {
+      handleCorrectMatch(imageCard, labelCard);
+    } else {
+      handleWrongMatch(imageCard, labelCard);
+    }
+  }
+
+  function handleCorrectMatch(imageCard, labelCard) {
+    imageCard.dataset.matched = 'true';
+    labelCard.dataset.matched = 'true';
+
+    imageCard.classList.add('matched');
+    labelCard.classList.add('matched');
+
+    // Update aria labels
+    imageCard.setAttribute('aria-label', imageCard.getAttribute('aria-label').replace('drag to match', 'matched ✓'));
+    labelCard.setAttribute('aria-label', labelCard.getAttribute('aria-label') + ' — matched ✓');
+
+    // Move matched cards to the top of their columns (below the header)
+    const imagesHeader = document.querySelector('#images-col .col-header');
+    imagesHeader.after(imageCard);
+    document.getElementById('labels-cards-wrap').prepend(labelCard);
+
+    // Pop animation
+    imageCard.classList.add('pop');
+    labelCard.classList.add('pop');
+    setTimeout(() => {
+      imageCard.classList.remove('pop');
+      labelCard.classList.remove('pop');
+    }, 400);
+
+    state.matchedCount++;
+    updateProgress();
+
+    if (state.matchedCount === 8) {
+      setTimeout(showCelebration, 700);
+    }
+  }
+
+  function handleWrongMatch(imageCard, labelCard) {
+    imageCard.classList.add('wrong', 'shake');
+    labelCard.classList.add('wrong', 'shake');
+    setTimeout(() => {
+      imageCard.classList.remove('wrong', 'shake');
+      labelCard.classList.remove('wrong', 'shake');
+    }, 500);
+  }
+
+  // ── Progress bar ──────────────────────────────────────────────────────────
+
+  function updateProgress() {
+    const pct = (state.matchedCount / 8) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-text').textContent =
+      state.matchedCount === 8 ? 'All 8 matched! 🎉' : `${state.matchedCount} of 8 matched!`;
+  }
+
+  // ── Celebration ───────────────────────────────────────────────────────────
+
+  function showCelebration() {
+    document.getElementById('celebration').classList.remove('hidden');
+    spawnConfetti();
+  }
+
+  function spawnConfetti() {
+    const colors = ['#FF6B35','#FFD700','#4CAF50','#4A90D9','#9B59B6','#E91E63','#00BCD4','#FF9800'];
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      const size = 8 + Math.random() * 10;
+      p.style.cssText = `
+        left:              ${Math.random() * 100}vw;
+        width:             ${size}px;
+        height:            ${size}px;
+        border-radius:     ${Math.random() > .5 ? '50%' : '2px'};
+        background:        ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration:${1.4 + Math.random() * 2.4}s;
+        animation-delay:   ${Math.random() * 1.6}s;
+      `;
+      document.body.appendChild(p);
+      p.addEventListener('animationend', () => p.remove());
+    }
+  }
+
+  // ── Restart ───────────────────────────────────────────────────────────────
+
+  document.getElementById('restart-btn').addEventListener('click', initGame);
+  document.getElementById('play-again-btn').addEventListener('click', initGame);
+
+  // ── Go! ───────────────────────────────────────────────────────────────────
+  initGame();
+</script>
+</body>
+</html>
