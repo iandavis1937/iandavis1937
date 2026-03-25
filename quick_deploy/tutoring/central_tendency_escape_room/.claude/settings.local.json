@@ -6,7 +6,11 @@
       "Bash(python3:*)",
       "Bash(~/.pyenv/versions/3.13.5/bin/python3 -c \"\nimport pypdf\nreader = pypdf.PdfReader\\('/mnt/c/wd/varsity_tutors/local_games/central_tendency_escape_room/FREEMathEscapeRoomfor3rdGrade4thGradeand5thGradeBreakoutActivity-1.pdf'\\)\nprint\\(f'Pages: {len\\(reader.pages\\)}'\\)\nfor i, page in enumerate\\(reader.pages[:30]\\):\n    text = page.extract_text\\(\\)\n    if text and text.strip\\(\\):\n        print\\(f'--- Page {i+1} ---'\\)\n        print\\(text[:1000]\\)\n        print\\(\\)\n\")",
       "Bash(~/.pyenv/versions/3.13.5/bin/pip install:*)",
-      "Bash(~/.pyenv/versions/3.13.5/bin/python3 -c \":*)"
+      "Bash(~/.pyenv/versions/3.13.5/bin/python3 -c \":*)",
+      "WebSearch",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:firebase.blog)",
+      "WebFetch(domain:dev.to)"
     ]
   }
 }

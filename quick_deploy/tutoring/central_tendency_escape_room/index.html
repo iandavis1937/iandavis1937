@@ -2530,6 +2530,10 @@
 <!-- ════════════════════════════════════════════
      JAVASCRIPT
 ════════════════════════════════════════════ -->
+<!-- Firebase Realtime Database (compat build — no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
 /* ── Starfield ── */
 (function () {
@@ -2652,6 +2656,7 @@ function startGame() {
   document.getElementById('landing').classList.remove('active');
   document.getElementById('room1').classList.add('active');
   startTimer();
+  window._tracker && _tracker.register(G.name);
   loadBriefing(1);
   document.getElementById('lock-r1a').focus();
 }
@@ -2704,11 +2709,13 @@ function checkR1() {
     fb.className = 'fb-msg err'; fb.textContent = msgs.join('  //  ');
     if (r.attempts >= 3) document.getElementById('hint-r1-a').classList.add('show');
     if (r.attempts >= 6) document.getElementById('hint-r1-b').classList.add('show');
+    window._tracker && _tracker.recordAttempt(1, r.attempts);
     return;
   }
   document.getElementById('btn-r1').disabled = true;
   fb.className = 'fb-msg ok'; fb.textContent = '✓ ALL MEAN CODES ACCEPTED — AIRLOCK DISENGAGING';
   setTimeout(() => document.getElementById('success-r1').classList.add('show'), 1100);
+  window._tracker && _tracker.roomComplete(1, G.r1.attempts);
 }
 
 function clearFeedback() { document.getElementById('fb-r1').className = 'fb-msg'; }
@@ -2754,11 +2761,13 @@ function checkR2() {
     fb.className = 'fb-msg err'; fb.textContent = msgs.join('  //  ');
     if (r.attempts >= 3) document.getElementById('hint-r2-a').classList.add('show');
     if (r.attempts >= 6) document.getElementById('hint-r2-b').classList.add('show');
+    window._tracker && _tracker.recordAttempt(2, r.attempts);
     return;
   }
   document.getElementById('btn-r2').disabled = true;
   fb.className = 'fb-msg ok'; fb.textContent = '✓ ALL MEDIAN CODES ACCEPTED — SORTING BAY UNLOCKED';
   setTimeout(() => document.getElementById('success-r2').classList.add('show'), 1100);
+  window._tracker && _tracker.roomComplete(2, G.r2.attempts);
 }
 
 function clearFeedbackR2() { document.getElementById('fb-r2').className = 'fb-msg'; }
@@ -2803,11 +2812,13 @@ function checkR3() {
     fb.className = 'fb-msg err'; fb.textContent = msgs.join('  //  ');
     if (r.attempts >= 3) document.getElementById('hint-r3-a').classList.add('show');
     if (r.attempts >= 6) document.getElementById('hint-r3-b').classList.add('show');
+    window._tracker && _tracker.recordAttempt(3, r.attempts);
     return;
   }
   document.getElementById('btn-r3').disabled = true;
   fb.className = 'fb-msg ok'; fb.textContent = '✓ ALL MODE CODES ACCEPTED — VAULT DOORS DISENGAGING';
   setTimeout(() => document.getElementById('success-r3').classList.add('show'), 1100);
+  window._tracker && _tracker.roomComplete(3, G.r3.attempts);
 }
 
 function clearFeedbackR3() { document.getElementById('fb-r3').className = 'fb-msg'; }
@@ -2852,11 +2863,13 @@ function checkR4() {
     fb.className = 'fb-msg err'; fb.textContent = msgs.join('  //  ');
     if (r.attempts >= 3) document.getElementById('hint-r4-a').classList.add('show');
     if (r.attempts >= 6) document.getElementById('hint-r4-b').classList.add('show');
+    window._tracker && _tracker.recordAttempt(4, r.attempts);
     return;
   }
   document.getElementById('btn-r4').disabled = true;
   fb.className = 'fb-msg ok'; fb.textContent = '✓ ALL RANGE CODES ACCEPTED — VAULT SEAL DISENGAGING';
   setTimeout(() => document.getElementById('success-r4').classList.add('show'), 1100);
+  window._tracker && _tracker.roomComplete(4, G.r4.attempts);
 }
 
 function clearFeedbackR4() { document.getElementById('fb-r4').className = 'fb-msg'; }
@@ -2903,12 +2916,14 @@ function checkR5() {
     fb.className = 'fb-msg err'; fb.textContent = msgs.join('  //  ');
     if (r.attempts >= 3) document.getElementById('hint-r5-a').classList.add('show');
     if (r.attempts >= 6) document.getElementById('hint-r5-b').classList.add('show');
+    window._tracker && _tracker.recordAttempt(5, r.attempts);
     return;
   }
   document.getElementById('btn-r5').disabled = true;
   fb.className = 'fb-msg ok'; fb.textContent = '✓ ALL CODES ACCEPTED — ESCAPE POD BAY UNLOCKING';
   document.getElementById('victory-name').textContent = `AGENT ${G.name}`;
   setTimeout(() => document.getElementById('victory').classList.add('show'), 1400);
+  window._tracker && _tracker.finish(G.secondsLeft);
 }
 
 function clearFeedbackR5() { document.getElementById('fb-r5').className = 'fb-msg'; }
@@ -2956,6 +2971,83 @@ function clearFeedbackR5() { document.getElementById('fb-r5').className = 'fb-ms
   }
 
   document.querySelectorAll('.reading-cell').forEach(initCell);
+})();
+
+/* ── Teacher Dashboard Tracker ── */
+(function () {
+  // ── Paste your Firebase config here ──────────────────────────────────────
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyBX59XFTJvRxgIYsndSA-UJyE4i4zqag0U",
+    authDomain:        "central-tendency-escape-room.firebaseapp.com",
+    databaseURL:       "https://central-tendency-escape-room-default-rtdb.firebaseio.com",
+    projectId:         "central-tendency-escape-room",
+    storageBucket:     "central-tendency-escape-room.firebasestorage.app",
+    messagingSenderId: "776565462456",
+    appId:             "1:776565462456:web:84c2aca3d2793930762b4d",
+    measurementId:     "G-6ZKY5PGNVH"
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
+  if (typeof firebase === 'undefined') return; // SDK failed to load — game still works
+  if (!FIREBASE_CONFIG.databaseURL || FIREBASE_CONFIG.databaseURL.includes('PASTE')) return;
+
+  const SESSION_ID = new URLSearchParams(window.location.search).get('session') || 'default';
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  } catch (e) {
+    if (!/already exists/.test(e.message)) return;
+  }
+  const db = firebase.database();
+
+  window._tracker = {
+    _ref: null,
+
+    register(name) {
+      const key = name.replace(/\s+/g, '_').toUpperCase();
+      this._ref = db.ref('sessions/' + SESSION_ID + '/students/' + key);
+      this._ref.set({
+        name,
+        startedAt: firebase.database.ServerValue.TIMESTAMP,
+        currentRoom: 1,
+        finishedAt: null,
+        timeLeftAtFinish: null,
+        rooms: {
+          r1: { completed: false, completedAt: null, attempts: 0 },
+          r2: { completed: false, completedAt: null, attempts: 0 },
+          r3: { completed: false, completedAt: null, attempts: 0 },
+          r4: { completed: false, completedAt: null, attempts: 0 },
+          r5: { completed: false, completedAt: null, attempts: 0 }
+        }
+      });
+    },
+
+    roomComplete(roomNum, attempts) {
+      if (!this._ref) return;
+      const u = {};
+      u['rooms/r' + roomNum + '/completed']   = true;
+      u['rooms/r' + roomNum + '/completedAt'] = firebase.database.ServerValue.TIMESTAMP;
+      u['rooms/r' + roomNum + '/attempts']    = attempts;
+      u['currentRoom']                        = roomNum + 1;
+      this._ref.update(u);
+    },
+
+    recordAttempt(roomNum, attempts) {
+      if (!this._ref) return;
+      const u = {};
+      u['rooms/r' + roomNum + '/attempts'] = attempts;
+      this._ref.update(u);
+    },
+
+    finish(secondsLeft) {
+      if (!this._ref) return;
+      this._ref.update({
+        finishedAt:      firebase.database.ServerValue.TIMESTAMP,
+        timeLeftAtFinish: secondsLeft,
+        currentRoom:     'finished'
+      });
+    }
+  };
 })();
 
 /* ── Dev Nav ── */

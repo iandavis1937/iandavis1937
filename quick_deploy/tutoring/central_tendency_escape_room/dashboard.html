@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Lab Breakout — Teacher Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void:       #050810;
+      --panel:      #090e1d;
+      --surface:    #0c1225;
+      --raised:     #111829;
+
+      --teal:       #00e5cc;
+      --teal-mid:   #00c8b4;
+      --teal-dim:   #3ecfc4;
+      --teal-glow:  rgba(0, 229, 204, 0.18);
+      --teal-faint: rgba(0, 229, 204, 0.06);
+
+      --amber:      #ffb703;
+      --amber-dim:  #cc9800;
+      --amber-faint:rgba(255, 183, 3, 0.07);
+
+      --red:        #ff3860;
+      --red-dim:    #8c0020;
+      --red-faint:  rgba(255, 56, 96, 0.07);
+
+      --green:      #00e676;
+      --green-faint:rgba(0, 230, 118, 0.08);
+
+      --text-hi:    #e8f4f8;
+      --text-mid:   #a8c8db;
+      --text-lo:    #7098b0;
+
+      --border:     rgba(0, 229, 204, 0.14);
+      --border-hi:  rgba(0, 229, 204, 0.45);
+
+      --mono: 'Share Tech Mono', monospace;
+      --display: 'Orbitron', sans-serif;
+      --body: 'Exo 2', sans-serif;
+      --r: 2px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: var(--void);
+      color: var(--text-hi);
+      font-family: var(--body);
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--teal);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #conn-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border-radius: 2px;
+      border: 1px solid currentColor;
+      transition: color 0.3s, border-color 0.3s;
+    }
+    #conn-badge.live   { color: var(--green); }
+    #conn-badge.offline { color: var(--red); }
+
+    /* ── Session Loader ── */
+    #session-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    #session-bar label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-lo);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    #session-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-hi);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: var(--r);
+      outline: none;
+      width: 180px;
+      transition: border-color 0.2s;
+    }
+    #session-input:focus { border-color: var(--teal); }
+
+    .hdr-btn {
+      background: transparent;
+      border: 1px solid var(--border-hi);
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      border-radius: var(--r);
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .hdr-btn:hover { background: var(--teal-faint); }
+
+    #copy-btn { color: var(--text-mid); border-color: var(--border); }
+
+    /* ── Summary Bar ── */
+    #summary-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-lo);
+      letter-spacing: 0.07em;
+    }
+
+    #summary-bar span b {
+      color: var(--text-hi);
+      font-weight: normal;
+    }
+
+    /* ── Main Content ── */
+    main {
+      padding: 20px;
+    }
+
+    /* ── Empty State ── */
+    #empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-lo);
+    }
+    #empty-state p:first-child {
+      font-family: var(--display);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      color: var(--text-mid);
+      margin-bottom: 12px;
+    }
+    #empty-state p {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    #empty-state code {
+      color: var(--teal-dim);
+    }
+
+    /* ── Student Grid ── */
+    #student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    /* ── Student Card ── */
+    .student-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      transition: border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .student-card.active   { border-color: rgba(0, 229, 204, 0.35); }
+    .student-card.finished { border-color: rgba(0, 230, 118, 0.5); background: var(--green-faint); }
+    .student-card.idle     { opacity: 0.55; }
+
+    /* Finished banner */
+    .student-card.finished::after {
+      content: 'ESCAPED';
+      position: absolute;
+      top: 10px; right: -22px;
+      background: var(--green);
+      color: var(--void);
+      font-family: var(--display);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 28px;
+      transform: rotate(35deg);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .card-name {
+      font-family: var(--display);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+    }
+    .student-card.finished .card-name { color: var(--green); }
+
+    .card-timer {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-lo);
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      background: var(--surface);
+      border-radius: 2px;
+      height: 4px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--teal);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .student-card.finished .progress-fill { background: var(--green); }
+
+    .progress-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-lo);
+      margin-bottom: 8px;
+      margin-top: -6px;
+      text-align: right;
+    }
+
+    /* Room rows */
+    .room-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-lo);
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .room-row:first-child { border-top: none; }
+
+    .room-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--raised);
+    }
+    .room-dot.done      { background: var(--teal); }
+    .room-dot.active    { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+    .student-card.finished .room-dot.done { background: var(--green); }
+
+    .room-concept {
+      width: 54px;
+      color: var(--text-mid);
+      font-size: 10px;
+    }
+
+    .room-progress {
+      flex: 1;
+      color: var(--text-lo);
+      font-size: 10px;
+    }
+
+    .room-attempts {
+      font-size: 10px;
+      min-width: 48px;
+      text-align: right;
+    }
+    .room-attempts.warn   { color: var(--amber); }
+    .room-attempts.stuck  { color: var(--red); }
+
+    .hint-icon {
+      font-size: 10px;
+      color: var(--amber-dim);
+    }
+
+    /* Card footer */
+    .card-footer {
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-lo);
+      text-align: right;
+    }
+    .card-footer.stale { color: var(--red-dim); }
+
+    /* ── Finished List ── */
+    #finished-section {
+      margin-top: 28px;
+    }
+
+    #finished-section h2 {
+      font-family: var(--display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--text-lo);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #finished-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .finished-row {
+      background: var(--surface);
+      border: 1px solid rgba(0, 230, 118, 0.2);
+      border-radius: var(--r);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .finished-rank {
+      color: var(--text-lo);
+      min-width: 22px;
+      font-size: 11px;
+    }
+
+    .finished-name {
+      color: var(--green);
+      flex: 1;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+    }
+
+    .finished-time {
+      color: var(--text-mid);
+      font-size: 11px;
+    }
+
+    .finished-attempts {
+      color: var(--text-lo);
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Data Lab Breakout &mdash; Dashboard</h1>
+  <span id="conn-badge" class="offline">OFFLINE</span>
+
+  <div id="session-bar">
+    <label>SESSION</label>
+    <input id="session-input" type="text" placeholder="e.g. period3-mar25" spellcheck="false">
+    <button class="hdr-btn" onclick="loadSession()">LOAD</button>
+    <button class="hdr-btn" id="copy-btn" onclick="copyStudentLink()">COPY LINK</button>
+  </div>
+</header>
+
+<div id="summary-bar">
+  <span>ACTIVE: <b id="sum-active">0</b></span>
+  <span>ESCAPED: <b id="sum-escaped">0</b></span>
+  <span>IN R1: <b id="sum-r1">0</b></span>
+  <span>IN R2: <b id="sum-r2">0</b></span>
+  <span>IN R3: <b id="sum-r3">0</b></span>
+  <span>IN R4: <b id="sum-r4">0</b></span>
+  <span>IN R5: <b id="sum-r5">0</b></span>
+  <span>SESSION: <b id="sum-session">—</b></span>
+</div>
+
+<main>
+  <div id="empty-state">
+    <p>AWAITING AGENTS</p>
+    <p>Enter a session ID above and click LOAD.<br>
+    Share the game URL with your students:<br>
+    <code>index.html?session=YOUR-SESSION-ID</code><br><br>
+    Student cards will appear here automatically as agents join.</p>
+  </div>
+
+  <div id="student-grid" style="display:none"></div>
+
+  <div id="finished-section" style="display:none">
+    <h2>Escaped Agents — Ranked by Speed</h2>
+    <div id="finished-list"></div>
+  </div>
+</main>
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+  // ── Paste your Firebase config here ──────────────────────────────────────
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyBX59XFTJvRxgIYsndSA-UJyE4i4zqag0U",
+    authDomain:        "central-tendency-escape-room.firebaseapp.com",
+    databaseURL:       "https://central-tendency-escape-room-default-rtdb.firebaseio.com",
+    projectId:         "central-tendency-escape-room",
+    storageBucket:     "central-tendency-escape-room.firebasestorage.app",
+    messagingSenderId: "776565462456",
+    appId:             "1:776565462456:web:84c2aca3d2793930762b4d",
+    measurementId:     "G-6ZKY5PGNVH"
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const ROOM_CONCEPTS = { r1:'MEAN', r2:'MEDIAN', r3:'MODE', r4:'RANGE', r5:'FINAL' };
+  const ROOM_TOTALS   = { r1: 4, r2: 5, r3: 4, r4: 4, r5: 6 };
+  const TOTAL_PUZZLES = 23; // 4+5+4+4+6
+
+  let db = null;
+  let activeListener = null;
+  let currentSessionId = null;
+  const cardData = {}; // keyed by studentKey
+
+  // ── Firebase Init ──
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => {
+      const badge = document.getElementById('conn-badge');
+      if (snap.val()) {
+        badge.textContent = 'LIVE';
+        badge.className = 'live';
+      } else {
+        badge.textContent = 'OFFLINE';
+        badge.className = 'offline';
+      }
+    });
+  } catch (e) {
+    console.warn('Firebase init failed:', e);
+  }
+
+  // ── Session ──
+  function loadSession() {
+    const id = document.getElementById('session-input').value.trim();
+    if (!id) return;
+    if (!db) { alert('Firebase is not configured. Paste your firebaseConfig into dashboard.html.'); return; }
+    if (activeListener) activeListener.off();
+
+    currentSessionId = id;
+    document.getElementById('sum-session').textContent = id;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('student-grid').style.display = 'grid';
+
+    const ref = db.ref('sessions/' + id + '/students');
+    activeListener = ref;
+    ref.on('value', snap => {
+      const students = snap.val() || {};
+      Object.entries(students).forEach(([key, data]) => {
+        cardData[key] = data;
+      });
+      renderAll();
+    });
+  }
+
+  // Pre-load session from URL param
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlSession = new URLSearchParams(window.location.search).get('session');
+    if (urlSession) {
+      document.getElementById('session-input').value = urlSession;
+      loadSession();
+    }
+  });
+
+  document.getElementById('session-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadSession();
+  });
+
+  // ── Copy Link ──
+  function copyStudentLink() {
+    const id = document.getElementById('session-input').value.trim() || currentSessionId;
+    if (!id) { alert('Enter a session ID first.'); return; }
+    const base = window.location.href.replace(/dashboard\.html.*$/, '');
+    const url = base + 'index.html?session=' + encodeURIComponent(id);
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'COPIED!';
+      setTimeout(() => { btn.textContent = 'COPY LINK'; }, 2000);
+    });
+  }
+
+  // ── Rendering ──
+  function solvedCount(student) {
+    let n = 0;
+    for (let i = 1; i <= 5; i++) {
+      const r = student.rooms && student.rooms['r' + i];
+      if (r && r.completed) n++;
+    }
+    return n;
+  }
+
+  function totalAttempts(student) {
+    let n = 0;
+    for (let i = 1; i <= 5; i++) {
+      const r = student.rooms && student.rooms['r' + i];
+      if (r) n += (r.attempts || 0);
+    }
+    return n;
+  }
+
+  function timeAgo(tsMs) {
+    if (!tsMs) return '—';
+    const sec = Math.floor((Date.now() - tsMs) / 1000);
+    if (sec < 5)  return 'just now';
+    if (sec < 60) return sec + 's ago';
+    return Math.floor(sec / 60) + 'm ago';
+  }
+
+  function formatTimeLeft(seconds) {
+    if (seconds == null) return '—';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  function elapsedFromStart(student) {
+    if (!student.startedAt) return '—';
+    const sec = Math.floor((Date.now() - student.startedAt) / 1000);
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  function progressPercent(student) {
+    let solved = 0;
+    for (let i = 1; i <= 5; i++) {
+      const r = student.rooms && student.rooms['r' + i];
+      if (r && r.completed) solved++;
+    }
+    return Math.round((solved / 5) * 100);
+  }
+
+  function currentRoomNum(student) {
+    if (student.currentRoom === 'finished') return 6;
+    return parseInt(student.currentRoom, 10) || 1;
+  }
+
+  function getLastActivity(student) {
+    // Find the most recent completedAt timestamp across rooms
+    let latest = student.startedAt || 0;
+    for (let i = 1; i <= 5; i++) {
+      const r = student.rooms && student.rooms['r' + i];
+      if (r && r.completedAt && r.completedAt > latest) latest = r.completedAt;
+    }
+    if (student.finishedAt && student.finishedAt > latest) latest = student.finishedAt;
+    return latest;
+  }
+
+  function buildRoomRows(student) {
+    let html = '';
+    const curRoom = currentRoomNum(student);
+    for (let i = 1; i <= 5; i++) {
+      const key = 'r' + i;
+      const r = (student.rooms && student.rooms[key]) || { completed: false, attempts: 0 };
+      const isActive = !r.completed && i === curRoom;
+      const dotClass = r.completed ? 'done' : (isActive ? 'active' : '');
+
+      let attClass = '';
+      const att = r.attempts || 0;
+      if (att >= 6) attClass = 'stuck';
+      else if (att >= 3) attClass = 'warn';
+
+      const hintsIcon = att >= 3 ? ' <span class="hint-icon">&#9889;</span>' : '';
+
+      html += `<div class="room-row">
+        <span class="room-dot ${dotClass}"></span>
+        <span class="room-concept">${ROOM_CONCEPTS[key]}</span>
+        <span class="room-progress">${r.completed ? '&#10003; DONE' : (isActive ? 'IN PROGRESS' : '&mdash;')}</span>
+        <span class="room-attempts ${attClass}">${att > 0 ? att + ' att' : '&mdash;'}${hintsIcon}</span>
+      </div>`;
+    }
+    return html;
+  }
+
+  function buildCard(key, student) {
+    const isFinished = student.currentRoom === 'finished';
+    const lastAct = getLastActivity(student);
+    const staleSec = lastAct ? Math.floor((Date.now() - lastAct) / 1000) : 9999;
+    const isIdle = staleSec > 120 && !isFinished;
+    const pct = progressPercent(student);
+    const cardClass = ['student-card', isFinished ? 'finished' : 'active', isIdle ? 'idle' : ''].join(' ');
+
+    const timerLabel = isFinished
+      ? formatTimeLeft(student.timeLeftAtFinish) + ' left'
+      : elapsedFromStart(student);
+
+    const lastLine = isFinished
+      ? ''
+      : `<div class="card-footer ${staleSec > 60 ? 'stale' : ''}">updated ${timeAgo(lastAct)}</div>`;
+
+    return `<div class="${cardClass}" id="card-${key}" data-key="${key}">
+      <div class="card-header">
+        <span class="card-name">AGENT ${student.name || key}</span>
+        <span class="card-timer">&#9201; ${timerLabel}</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label">Room ${Math.min(currentRoomNum(student), 5)} / 5</div>
+      ${buildRoomRows(student)}
+      ${lastLine}
+    </div>`;
+  }
+
+  function renderAll() {
+    const grid = document.getElementById('student-grid');
+    const finishedSection = document.getElementById('finished-section');
+    const finishedList = document.getElementById('finished-list');
+
+    const entries = Object.entries(cardData);
+    if (entries.length === 0) return;
+
+    // Sort: finished (by speed desc) first, then by room desc, then by attempts asc
+    entries.sort(([,a],[,b]) => {
+      const aFin = a.currentRoom === 'finished';
+      const bFin = b.currentRoom === 'finished';
+      if (aFin && bFin) return (b.timeLeftAtFinish||0) - (a.timeLeftAtFinish||0);
+      if (aFin) return -1;
+      if (bFin) return 1;
+      return currentRoomNum(b) - currentRoomNum(a);
+    });
+
+    // Update or create cards
+    const activeEntries = entries.filter(([,s]) => s.currentRoom !== 'finished');
+    const finEntries    = entries.filter(([,s]) => s.currentRoom === 'finished');
+
+    grid.innerHTML = activeEntries.map(([k,s]) => buildCard(k,s)).join('');
+
+    // Summary bar
+    const counts = {r1:0,r2:0,r3:0,r4:0,r5:0};
+    activeEntries.forEach(([,s]) => {
+      const r = 'r' + Math.min(currentRoomNum(s), 5);
+      if (counts[r] !== undefined) counts[r]++;
+    });
+    document.getElementById('sum-active').textContent = activeEntries.length;
+    document.getElementById('sum-escaped').textContent = finEntries.length;
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById('sum-r' + i).textContent = counts['r' + i];
+    }
+
+    // Finished section
+    if (finEntries.length > 0) {
+      finishedSection.style.display = '';
+      finishedList.innerHTML = finEntries.map(([,s], idx) => `
+        <div class="finished-row">
+          <span class="finished-rank">#${idx+1}</span>
+          <span class="finished-name">AGENT ${s.name || '—'}</span>
+          <span class="finished-time">${formatTimeLeft(s.timeLeftAtFinish)} remaining</span>
+          <span class="finished-attempts">${totalAttempts(s)} total attempts</span>
+        </div>
+      `).join('');
+    } else {
+      finishedSection.style.display = 'none';
+    }
+  }
+
+  // Refresh "updated X ago" labels every 15 seconds without re-fetching from Firebase
+  setInterval(() => {
+    document.querySelectorAll('.student-card').forEach(card => {
+      const key = card.dataset.key;
+      const student = cardData[key];
+      if (!student || student.currentRoom === 'finished') return;
+      const lastAct = getLastActivity(student);
+      const staleSec = lastAct ? Math.floor((Date.now() - lastAct) / 1000) : 9999;
+      const footer = card.querySelector('.card-footer');
+      if (footer) {
+        footer.textContent = 'updated ' + timeAgo(lastAct);
+        footer.className = 'card-footer' + (staleSec > 60 ? ' stale' : '');
+      }
+      if (staleSec > 120) card.classList.add('idle');
+      else card.classList.remove('idle');
+      // Update elapsed timer
+      const timerEl = card.querySelector('.card-timer');
+      if (timerEl) timerEl.textContent = '\u23F1 ' + elapsedFromStart(student);
+    });
+  }, 15000);
+</script>
+</body>
+</html>
