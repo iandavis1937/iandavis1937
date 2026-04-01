@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mean &amp; Median Duel — Teacher Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="teacher-page">
+
+  <!-- ── Login view ── -->
+  <section id="login-view" class="teacher-login-wrap">
+    <div class="teacher-login-card">
+      <h1 class="teacher-title">Teacher Login</h1>
+      <p class="teacher-subtitle">Mean &amp; Median Duel — Control Room</p>
+      <form id="login-form" class="teacher-login-form">
+        <label for="teacher-passcode">Passcode</label>
+        <input id="teacher-passcode" type="password" required autocomplete="off" placeholder="Enter teacher passcode" />
+
+        <button type="submit" class="btn btn-teacher-login">Enter Dashboard</button>
+      </form>
+      <p id="login-error" class="login-error" aria-live="assertive"></p>
+    </div>
+  </section>
+
+  <!-- ── Dashboard view ── -->
+  <section id="dashboard-view" class="teacher-dashboard" style="display:none">
+
+    <!-- Top bar -->
+    <header class="teacher-topbar">
+      <span class="teacher-topbar-title">🎓 Teacher Dashboard</span>
+      <span class="teacher-email-display">Teacher View</span>
+      <button id="logout-btn" class="btn btn-outline-small">Log out</button>
+    </header>
+
+    <div class="teacher-body">
+
+      <!-- Create game -->
+      <div class="teacher-panel create-panel">
+        <h2 class="panel-title">Create New Game</h2>
+        <div class="create-row">
+          <label for="max-rounds-input">Rounds:</label>
+          <input id="max-rounds-input" type="number" min="1" max="20" value="5" class="buffer-input" style="width:60px" />
+          <button id="teacher-create-btn" class="btn btn-teacher-primary">Create Game</button>
+        </div>
+        <p id="create-game-status" class="status-msg"></p>
+        <div id="created-game-id-box" style="display:none">
+          <p class="game-id-label">Share this Game ID with students:</p>
+          <div id="created-game-id" class="game-id-display"></div>
+        </div>
+      </div>
+
+      <!-- Game ID / observe -->
+      <div class="teacher-panel observe-panel">
+        <h2 class="panel-title">Observe Game</h2>
+        <div class="observe-row">
+          <input
+            id="game-id-observe"
+            type="text"
+            placeholder="4-digit Game ID"
+            maxlength="4"
+            autocomplete="off"
+            inputmode="numeric"
+          />
+          <button id="observe-btn" class="btn btn-teacher-primary">Observe</button>
+        </div>
+        <p id="observe-status" class="status-msg"></p>
+      </div>
+
+      <!-- Status bar -->
+      <div class="teacher-panel status-panel">
+        <h2 class="panel-title">Game Status</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Status</span>
+            <span id="dash-status" class="status-value">—</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Round</span>
+            <span id="dash-round" class="status-value">—</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label"><span id="dash-p1-name">P1</span> (Mean)</span>
+            <span id="dash-p1-score" class="status-value mean-color">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label"><span id="dash-p2-name">P2</span> (Median)</span>
+            <span id="dash-p2-score" class="status-value median-color">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live card display (always visible to teacher) -->
+      <div class="teacher-panel cards-panel">
+        <h2 class="panel-title">Current Round — Cards</h2>
+        <div id="teacher-cards" class="teacher-cards-row"></div>
+        <div class="teacher-card-stats">
+          <span class="tc-stat mean-color">Mean: <strong id="teacher-mean">—</strong></span>
+          <span class="tc-stat median-color">Median: <strong id="teacher-median">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="teacher-panel controls-panel">
+        <h2 class="panel-title">Controls</h2>
+
+        <div class="control-group">
+          <button id="pause-btn" class="btn btn-control" disabled>Pause Game</button>
+        </div>
+
+        <div class="control-group">
+          <button id="lock-p1-btn" class="btn btn-control" disabled>🔓 Lock P1</button>
+          <button id="lock-p2-btn" class="btn btn-control" disabled>🔓 Lock P2</button>
+        </div>
+
+        <div class="control-group buffer-group">
+          <label for="buffer-input" class="buffer-label">
+            Head-start for Mean player (seconds):
+          </label>
+          <div class="buffer-row">
+            <input
+              id="buffer-input"
+              type="number"
+              min="0"
+              step="0.5"
+              value="1"
+              class="buffer-input"
+            />
+            <button id="buffer-apply-btn" class="btn btn-teacher-primary" disabled>Apply</button>
+          </div>
+          <p class="buffer-active-text">
+            Currently active: <strong id="buffer-active">1</strong> second(s)
+          </p>
+          <p id="buffer-error" class="login-error"></p>
+        </div>
+
+        <div class="control-group control-group-danger">
+          <button id="force-round-btn" class="btn btn-danger-outline" disabled>
+            ⏭ Force Next Round
+          </button>
+          <button id="end-game-btn" class="btn btn-danger" disabled>
+            🛑 End Game
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /.teacher-body -->
+  </section>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/teacher.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mean &amp; Median Duel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="lobby-page">
+
+  <div class="lobby-container">
+    <header class="lobby-header">
+      <h1 class="logo">Mean &amp; Median Duel</h1>
+      <p class="tagline">2-player math showdown — fastest correct answer wins!</p>
+    </header>
+
+    <!-- Step 1: Enter display name -->
+    <section id="name-view">
+      <div class="card-panel">
+        <h2>Enter your name</h2>
+        <form id="name-form" class="name-form">
+          <input
+            id="display-name"
+            type="text"
+            placeholder="Your display name"
+            maxlength="20"
+            required
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-primary">Let's Go →</button>
+        </form>
+        <p id="name-status" class="status-msg"></p>
+      </div>
+    </section>
+
+    <!-- Step 2: Enter game ID provided by teacher -->
+    <section id="lobby-view" style="display:none">
+      <div class="card-panel" id="lobby-actions">
+        <h2>Join a Game</h2>
+        <p class="join-hint">Enter the Game ID your teacher shared with you.</p>
+        <div class="join-form">
+          <input
+            id="game-id-input"
+            type="text"
+            placeholder="4-digit Game ID"
+            maxlength="4"
+            autocomplete="off"
+            inputmode="numeric"
+          />
+          <button id="join-btn" class="btn btn-primary">Join →</button>
+        </div>
+        <p id="lobby-status" class="status-msg"></p>
+      </div>
+
+      <!-- Waiting for second player -->
+      <div id="waiting-msg" class="waiting-msg" style="display:none">
+        <div class="spinner"></div>
+        <p id="waiting-text">Waiting for opponent…</p>
+      </div>
+    </section>
+
+    <footer class="lobby-footer">
+      <a href="teacher.html" class="teacher-link">Teacher Login →</a>
+    </footer>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/lobby.js"></script>
+</body>
+</html>

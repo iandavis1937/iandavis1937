@@ -1,0 +1,8 @@
+# Firebase config — contains project credentials, never commit
+public/js/firebase-config.js
+
+# Firebase local files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

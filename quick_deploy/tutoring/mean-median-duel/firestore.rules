@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── games/{gameId} ─────────────────────────────────────────────────────
+    // Teacher access is enforced client-side via passcode. At the Firestore
+    // level any authenticated user (student or teacher, both anonymous) may
+    // read and write game documents — sufficient for a supervised classroom.
+    //
+    // NOTE (prototype limitation): Firestore rules cannot hide individual
+    // fields within a document. round.mean and round.median are readable by
+    // any client with access to this document, even before round.revealed is
+    // true. In production these values should be stored in a subcollection or
+    // written only after revealed=true via a Cloud Function.
+    match /games/{gameId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+  }
+}
