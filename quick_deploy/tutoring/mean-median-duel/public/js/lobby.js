@@ -106,7 +106,7 @@ async function joinGame() {
 
   if (assignedSlot === 2) {
     // Player 2 — game is now active, go straight in
-    location.href = `/game.html?gameId=${gameId}`;
+    location.href = `game.html?gameId=${gameId}`;
   } else {
     // Player 1 — wait for player 2
     setStatus('lobby-status', '');
@@ -125,7 +125,7 @@ function listenForOpponent(gameId) {
     const data = snap.data();
     if (data.status === 'active' && data.player2) {
       if (unsubGame) { unsubGame(); unsubGame = null; }
-      location.href = `/game.html?gameId=${gameId}`;
+      location.href = `game.html?gameId=${gameId}`;
     }
   });
 }

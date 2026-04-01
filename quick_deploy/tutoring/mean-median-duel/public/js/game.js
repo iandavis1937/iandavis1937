@@ -18,10 +18,10 @@ const $ = id => document.getElementById(id);
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(location.search);
   gameId = params.get('gameId');
-  if (!gameId) { location.href = '/'; return; }
+  if (!gameId) { location.href = 'index.html'; return; }
 
   auth.onAuthStateChanged(user => {
-    if (!user) { location.href = '/'; return; }
+    if (!user) { location.href = 'index.html'; return; }
     myUid = user.uid;
     startListener();
   });
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Firestore listener ────────────────────────────────────────────────────────
 function startListener() {
   unsubscribe = db.collection('games').doc(gameId).onSnapshot(snap => {
-    if (!snap.exists) { location.href = '/'; return; }
+    if (!snap.exists) { location.href = 'index.html'; return; }
     latestData = snap.data();
 
     const storedSlot = sessionStorage.getItem('playerSlot');
