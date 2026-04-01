@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE FINDER</title>
+<style>
+/* https://app.netlify.com/projects/line-equation/overview */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #050a0f;
+  --panel: #0a1520;
+  --border: #1a3a5c;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --dot-blue: #00aaff;
+  --dot-red: #ff3355;
+  --line-color: #39ff14;
+  --line-preview: rgba(57,255,20,0.35);
+  --text: #e8f5ff;
+  --dim: #4a7a9b;
+  --success: #39ff14;
+  --error: #ff3366;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,212,255,0.012) 2px, rgba(0,212,255,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+header {
+  width: 100%;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,21,32,0.95);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent);
+}
+.logo span { color: var(--accent2); }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 0.65rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+.header-right strong { color: var(--accent); }
+
+.main {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  width: 100%;
+  max-width: 1080px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* CANVAS */
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--border);
+  background: #020810;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,212,255,0.07), inset 0 0 60px rgba(0,0,0,0.5);
+  min-height: 0;
+}
+canvas { display: block; width: 100%; height: 100%; }
+
+/* PANEL */
+.panel {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.panel::-webkit-scrollbar { width: 3px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+.card-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Equation display */
+.eq-display {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--line-color);
+  text-shadow: 0 0 12px var(--line-color);
+  text-align: center;
+  padding: 10px 0 14px;
+  letter-spacing: 0.05em;
+}
+.eq-display .dim { color: var(--dim); font-size: 0.8rem; }
+
+/* Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.slider-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+}
+
+.slider-val {
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-weight: bold;
+  min-width: 48px;
+  text-align: right;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--border) var(--pct, 50%));
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+input[type=range].b-slider {
+  background: linear-gradient(to right, var(--accent2) var(--pct, 50%), var(--border) var(--pct, 50%));
+}
+input[type=range].b-slider::-webkit-slider-thumb {
+  background: var(--accent2);
+  box-shadow: 0 0 8px var(--accent2);
+}
+.slider-val.b-val { color: var(--accent2); }
+
+/* Numeric text inputs for m and b */
+.num-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.num-input-label {
+  font-size: 0.6rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+input[type=number].param-input {
+  background: #020810;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.82rem;
+  width: 72px;
+  padding: 4px 7px;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+input[type=number].param-input::-webkit-inner-spin-button,
+input[type=number].param-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=number].param-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,212,255,0.2); }
+input[type=number].param-input.b-input { color: var(--accent2); }
+input[type=number].param-input.b-input:focus { border-color: var(--accent2); box-shadow: 0 0 8px rgba(255,107,53,0.2); }
+
+/* Freestyle button */
+.btn-freestyle {
+  background: rgba(255,107,53,0.08);
+  border-color: var(--accent2);
+  color: var(--accent2);
+}
+.btn-freestyle:hover {
+  background: rgba(255,107,53,0.18);
+  box-shadow: 0 0 18px rgba(255,107,53,0.25);
+}
+.btn-freestyle.active {
+  background: rgba(255,107,53,0.22);
+  box-shadow: 0 0 24px rgba(255,107,53,0.4);
+}
+
+/* Accuracy meter */
+.accuracy-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.accuracy-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+}
+.accuracy-label span:first-child { color: var(--dim); letter-spacing: 0.08em; }
+.accuracy-pct {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: color 0.3s;
+}
+.accuracy-bar-bg {
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.accuracy-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.15s ease, background 0.3s;
+  width: 0%;
+}
+
+/* Dot legend */
+.legend {
+  display: flex;
+  gap: 16px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  color: var(--dim);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  padding: 9px 14px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  width: 100%;
+}
+.btn-primary {
+  background: rgba(0,212,255,0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-primary:hover {
+  background: rgba(0,212,255,0.18);
+  box-shadow: 0 0 18px rgba(0,212,255,0.25);
+}
+.btn-success {
+  background: rgba(57,255,20,0.08);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* Success flash */
+#successBanner {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 10;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+#successBanner.show { display: flex; }
+
+.success-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--success);
+  text-shadow: 0 0 40px var(--success), 0 0 80px rgba(57,255,20,0.4);
+  animation: pglow 1s ease-in-out infinite alternate;
+  letter-spacing: 0.15em;
+}
+.success-eq {
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+.success-score {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+}
+@keyframes pglow {
+  from { text-shadow: 0 0 20px var(--success); }
+  to   { text-shadow: 0 0 60px var(--success), 0 0 100px rgba(57,255,20,0.5); }
+}
+
+/* Level select */
+.level-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.level-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.52rem;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  background: rgba(0,212,255,0.03);
+  color: var(--dim);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s;
+}
+.level-btn:hover, .level-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,212,255,0.08);
+}
+
+/* Status bar */
+.status-bar {
+  width: 100%;
+  padding: 6px 16px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  font-size: 0.6rem;
+  color: var(--dim);
+  background: rgba(10,21,32,0.85);
+  flex-shrink: 0;
+}
+.sdot { width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px; }
+.sdot-blue { background:var(--dot-blue);box-shadow:0 0 5px var(--dot-blue); }
+.sdot-red  { background:var(--dot-red); box-shadow:0 0 5px var(--dot-red); }
+.sdot-green{ background:var(--success); box-shadow:0 0 5px var(--success); }
+
+#statusText { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LINE<span>.</span>FINDER</div>
+  <div class="header-right">
+    LEVEL <strong id="levelNum">1</strong>
+    &nbsp;|&nbsp;
+    SOLVED <strong id="solvedCount">0</strong>
+  </div>
+</header>
+
+<div class="main">
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="c"></canvas>
+    <div id="successBanner">
+      <div class="success-title">LOCKED IN!</div>
+      <div class="success-eq" id="successEq"></div>
+      <div class="success-score" id="successScore"></div>
+      <button class="btn btn-success" id="nextBtn" style="width:160px;margin-top:10px;">NEXT LEVEL ▶</button>
+    </div>
+  </div>
+
+  <div class="panel">
+
+    <div class="card">
+      <div class="card-title">▸ Your Line</div>
+      <div class="eq-display" id="eqDisplay">y = <span id="mDisplay">0</span>x <span id="bDisplay">+ 0</span></div>
+      <div class="slider-group">
+        <div class="slider-row">
+          <div class="slider-header">
+            <span class="slider-label">SLOPE (m)</span>
+            <span class="slider-val" id="mVal">0.00</span>
+          </div>
+          <input type="range" id="mSlider" min="-10" max="10" step="0.5" value="0">
+          <div class="num-input-wrap">
+            <span class="num-input-label">TYPE m =</span>
+            <input type="number" class="param-input" id="mInput" min="-10" max="10" step="0.1" value="0">
+          </div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span class="slider-label">INTERCEPT (b)</span>
+            <span class="slider-val b-val" id="bVal">0.00</span>
+          </div>
+          <input type="range" id="bSlider" class="b-slider" min="-10" max="10" step="0.5" value="0">
+          <div class="num-input-wrap">
+            <span class="num-input-label">TYPE b =</span>
+            <input type="number" class="param-input b-input" id="bInput" min="-10" max="10" step="0.1" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▸ Accuracy</div>
+      <div class="accuracy-wrap">
+        <div class="accuracy-label">
+          <span>MATCH SCORE</span>
+          <span class="accuracy-pct" id="accPct">0%</span>
+        </div>
+        <div class="accuracy-bar-bg">
+          <div class="accuracy-bar-fill" id="accBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▸ Target Points</div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--dot-blue);box-shadow:0 0 6px var(--dot-blue)"></div>
+          <span id="bluePt">–</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--dot-red);box-shadow:0 0 6px var(--dot-red)"></div>
+          <span id="redPt">–</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▸ Action</div>
+      <button class="btn btn-primary" id="submitBtn">▶ SUBMIT ANSWER</button>
+      <button class="btn btn-freestyle" id="freestyleBtn" style="margin-top:8px;">⬡ FREESTYLE MODE</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▸ Levels</div>
+      <div class="level-btns" id="levelBtns"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">▸ How to Play</div>
+      <div style="font-size:0.62rem;color:var(--dim);line-height:1.8;">
+        Adjust <b style="color:var(--accent)">m</b> and <b style="color:var(--accent2)">b</b> so the green line passes through both dots.<br><br>
+        <span style="color:var(--dot-blue)">●</span> Blue &amp; <span style="color:var(--dot-red)">●</span> Red must both lie on <b style="color:var(--line-color)">y = mx + b</b>.<br><br>
+        Hit <b>95%+</b> accuracy to win!
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="status-bar">
+  <span><span class="sdot sdot-blue"></span>BLUE DOT</span>
+  <span><span class="sdot sdot-red"></span>RED DOT</span>
+  <span><span class="sdot sdot-green"></span><span id="statusText">ADJUST m AND b TO BEGIN</span></span>
+</div>
+
+<script>
+// ─── LEVELS ───────────────────────────────────────────────────────────────────
+const FIXED_LEVELS = [
+  { blue: [2,  4], red: [-2, -4] },
+  { blue: [1,  3], red: [ 3,  7] },
+  { blue: [-3, 6], red: [ 3,  0] },
+];
+const RANDOM_STARTS_AT = 3;
+
+function generateRandomLevel() {
+  let blue, red, slope, intercept, attempts = 0;
+  do {
+    const x1 = Math.floor(Math.random() * 16) - 8;
+    let x2;
+    do { x2 = Math.floor(Math.random() * 16) - 8; } while (x2 === x1);
+    const y1 = Math.floor(Math.random() * 16) - 8;
+    const y2 = Math.floor(Math.random() * 16) - 8;
+    slope     = (y2 - y1) / (x2 - x1);
+    intercept = y1 - slope * x1;
+    blue = [x1, y1]; red = [x2, y2];
+    attempts++;
+  } while (attempts < 200 && (Math.abs(slope) > 9.5 || Math.abs(intercept) > 9.5));
+  return { blue, red };
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentLevel = 0;
+let solved = 0;
+let m = 0, b = 0;
+let won = false;
+let particles = [];
+let activeLevelData = FIXED_LEVELS[0];
+
+// ─── CANVAS ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const wrap   = document.getElementById('canvasWrap');
+
+const WORLD = 10; // world runs -10 to +10
+
+function resize() {
+  const r = wrap.getBoundingClientRect();
+  canvas.width  = r.width;
+  canvas.height = r.height;
+  draw();
+}
+window.addEventListener('resize', resize);
+
+function toScreen(wx, wy) {
+  const s = Math.min(canvas.width, canvas.height) / (WORLD * 2);
+  return [canvas.width/2 + wx*s, canvas.height/2 - wy*s];
+}
+function sc() { return Math.min(canvas.width, canvas.height) / (WORLD * 2); }
+
+// ─── ACCURACY ────────────────────────────────────────────────────────────────
+function computeAccuracy() {
+  const lv = activeLevelData;
+  const [bx, by] = lv.blue;
+  const [rx, ry] = lv.red;
+
+  // Residual at each point: how far is y=mx+b from the dot's y?
+  const errB = Math.abs((m * bx + b) - by);
+  const errR = Math.abs((m * rx + b) - ry);
+
+  // Score: perfect=0 error → 100%. Map error 0→0% match, 0→2 units = sharp falloff
+  const scoreB = Math.max(0, 1 - errB / 4);
+  const scoreR = Math.max(0, 1 - errR / 4);
+  return (scoreB + scoreR) / 2; // 0..1
+}
+
+// ─── DRAW ────────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const lv = activeLevelData;
+
+  // ── Minor grid ──
+  ctx.strokeStyle = 'rgba(0,212,255,0.18)';
+  ctx.lineWidth = 0.75;
+  for (let i = -WORLD; i <= WORLD; i++) {
+    const [sx] = toScreen(i, 0);
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height); ctx.stroke();
+    const [, sy] = toScreen(0, i);
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy); ctx.stroke();
+  }
+  // ── Major grid (every 5) ──
+  ctx.strokeStyle = 'rgba(0,212,255,0.38)';
+  ctx.lineWidth = 1.5;
+  for (let i = -WORLD; i <= WORLD; i += 5) {
+    const [sx] = toScreen(i, 0);
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height); ctx.stroke();
+    const [, sy] = toScreen(0, i);
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy); ctx.stroke();
+  }
+
+  // ── Axes ──
+  const [ox, oy] = toScreen(0, 0);
+  ctx.strokeStyle = 'rgba(0,212,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, canvas.height); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(canvas.width, oy); ctx.stroke();
+
+  // ── Tick marks ──
+  ctx.strokeStyle = 'rgba(0,212,255,0.4)';
+  ctx.lineWidth = 1;
+  for (let i = -WORLD; i <= WORLD; i++) {
+    const [sx] = toScreen(i, 0);
+    ctx.beginPath(); ctx.moveTo(sx, oy-4); ctx.lineTo(sx, oy+4); ctx.stroke();
+    const [, sy] = toScreen(0, i);
+    ctx.beginPath(); ctx.moveTo(ox-4, sy); ctx.lineTo(ox+4, sy); ctx.stroke();
+  }
+
+  // ── Axis labels ──
+  ctx.font = 'bold 10px "Share Tech Mono", monospace';
+  const labelPts = [
+    {wx:0,wy:0,label:'(0,0)',dx:10,dy:11},
+    {wx:-10,wy:0,label:'(-10,0)',dx:0,dy:13},
+    {wx:10,wy:0,label:'(10,0)',dx:0,dy:13},
+    {wx:0,wy:10,label:'(0,10)',dx:22,dy:0},
+    {wx:0,wy:-10,label:'(0,-10)',dx:24,dy:0},
+  ];
+  for (const p of labelPts) {
+    const [sx, sy] = toScreen(p.wx, p.wy);
+    ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(0,212,255,0.6)'; ctx.fill();
+    const lx = sx+p.dx, ly = sy+p.dy;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(p.label).width;
+    ctx.fillStyle = 'rgba(2,8,16,0.78)';
+    ctx.fillRect(lx-tw/2-3, ly-7, tw+6, 13);
+    ctx.fillStyle = 'rgba(0,212,255,0.85)';
+    ctx.fillText(p.label, lx, ly);
+  }
+
+  // ── Player line ──
+  // Draw wide glowing preview behind, then sharp line on top
+  const s = sc();
+  const x0w = -canvas.width  / (2*s);
+  const x1w =  canvas.width  / (2*s);
+  const [psx0, psy0] = toScreen(x0w, m*x0w + b);
+  const [psx1, psy1] = toScreen(x1w, m*x1w + b);
+
+  // Outer glow
+  ctx.strokeStyle = 'rgba(57,255,20,0.12)';
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(psx0, psy0); ctx.lineTo(psx1, psy1); ctx.stroke();
+
+  // Mid glow
+  ctx.strokeStyle = 'rgba(57,255,20,0.22)';
+  ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(psx0, psy0); ctx.lineTo(psx1, psy1); ctx.stroke();
+
+  // Core line
+  ctx.strokeStyle = '#39ff14';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#39ff14';
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.moveTo(psx0, psy0); ctx.lineTo(psx1, psy1); ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.lineCap = 'butt';
+
+  // ── Dots ──
+  function drawDot(wx, wy, color, glow, label) {
+    const [sx, sy] = toScreen(wx, wy);
+    const r = 10;
+    // Outer pulse ring
+    ctx.beginPath(); ctx.arc(sx, sy, r+6, 0, Math.PI*2);
+    ctx.strokeStyle = color.replace(')', ',0.25)').replace('rgb', 'rgba');
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Glow halo
+    const g = ctx.createRadialGradient(sx,sy,0,sx,sy,r*2.5);
+    g.addColorStop(0, glow); g.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(sx, sy, r*2.5, 0, Math.PI*2);
+    ctx.fillStyle = g; ctx.fill();
+    // Dot
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color; ctx.shadowBlur = 20;
+    ctx.fill(); ctx.shadowBlur = 0;
+    // Cross-hair lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx-r*1.8, sy); ctx.lineTo(sx+r*1.8, sy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx, sy-r*1.8); ctx.lineTo(sx, sy+r*1.8); ctx.stroke();
+    // Coord label
+    ctx.font = 'bold 16px "Share Tech Mono", monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const tw2 = ctx.measureText(label).width;
+    ctx.fillStyle = 'rgba(2,8,16,0.85)';
+    ctx.fillRect(sx+r+6, sy-11, tw2+10, 22);
+    ctx.shadowColor = color; ctx.shadowBlur = 8;
+    ctx.fillStyle = color;
+    ctx.fillText(label, sx+r+11, sy);
+    ctx.shadowBlur = 0;
+  }
+
+  drawDot(lv.blue[0], lv.blue[1], '#00aaff', 'rgba(0,170,255,0.55)', `(${lv.blue[0]},${lv.blue[1]})`);
+  drawDot(lv.red[0],  lv.red[1],  '#ff3355', 'rgba(255,51,85,0.55)',  `(${lv.red[0]},${lv.red[1]})`);
+
+  // ── Particles ──
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 0.022;
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0, p.r*p.life), 0, Math.PI*2);
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ─── UPDATE UI ───────────────────────────────────────────────────────────────
+function updateSliderTrack(el, val, min, max) {
+  const pct = ((val - min) / (max - min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+}
+
+function fmt(n) {
+  // Show as fraction or decimal cleanly
+  return Number.isInteger(n) ? n.toString() : n.toFixed(2);
+}
+
+function buildEqString(m, b) {
+  let s = 'y = ';
+  // m part
+  if (m === 0) s += '0·x';
+  else if (m === 1) s += 'x';
+  else if (m === -1) s += '-x';
+  else s += fmt(m) + 'x';
+  // b part
+  if (b === 0) s += ' + 0';
+  else if (b > 0) s += ' + ' + fmt(b);
+  else s += ' − ' + fmt(Math.abs(b));
+  return s;
+}
+
+function updateUI(source) {
+  const mSlider = document.getElementById('mSlider');
+  const bSlider = document.getElementById('bSlider');
+  const mInput  = document.getElementById('mInput');
+  const bInput  = document.getElementById('bInput');
+
+  if (source === 'mSlider') {
+    m = parseFloat(mSlider.value);
+    mInput.value = fmt(m);
+  } else if (source === 'bSlider') {
+    b = parseFloat(bSlider.value);
+    bInput.value = fmt(b);
+  } else if (source === 'mInput') {
+    const v = parseFloat(mInput.value);
+    if (!isNaN(v)) {
+      m = Math.max(-10, Math.min(10, v));
+      mSlider.value = m;
+    }
+  } else if (source === 'bInput') {
+    const v = parseFloat(bInput.value);
+    if (!isNaN(v)) {
+      b = Math.max(-10, Math.min(10, v));
+      bSlider.value = b;
+    }
+  } else {
+    // initial call — read from sliders
+    m = parseFloat(mSlider.value);
+    b = parseFloat(bSlider.value);
+    mInput.value = fmt(m);
+    bInput.value = fmt(b);
+  }
+
+  document.getElementById('mVal').textContent = fmt(m);
+  document.getElementById('bVal').textContent = fmt(b);
+  document.getElementById('mDisplay').textContent = (m === 1 ? '' : m === -1 ? '-' : fmt(m));
+  document.getElementById('bDisplay').textContent = (b >= 0 ? '+ ' : '− ') + fmt(Math.abs(b));
+
+  updateSliderTrack(mSlider, m, -10, 10);
+  updateSliderTrack(bSlider, b, -10, 10);
+
+  // Accuracy
+  const acc = computeAccuracy();
+  const pct = Math.round(acc * 100);
+  document.getElementById('accPct').textContent = pct + '%';
+  const bar = document.getElementById('accBar');
+  bar.style.width = pct + '%';
+  const color = acc >= 0.95 ? '#39ff14' : acc >= 0.7 ? '#00d4ff' : acc >= 0.4 ? '#ff6b35' : '#ff3366';
+  bar.style.background = color;
+  document.getElementById('accPct').style.color = color;
+
+  if (!won) {
+    if (acc >= 0.95) {
+      document.getElementById('statusText').textContent = 'PERFECT MATCH — HIT SUBMIT!';
+    } else if (acc >= 0.7) {
+      document.getElementById('statusText').textContent = 'GETTING CLOSE...';
+    } else {
+      document.getElementById('statusText').textContent = 'ADJUST m AND b TO MATCH THE DOTS';
+    }
+  }
+
+  draw();
+}
+
+// ─── SUBMIT ──────────────────────────────────────────────────────────────────
+function submit() {
+  if (won) return;
+  const acc = computeAccuracy();
+  if (acc < 0.95) {
+    document.getElementById('statusText').textContent = 'NOT QUITE — ACCURACY MUST BE 95%+';
+    return;
+  }
+  won = true;
+  solved++;
+  document.getElementById('solvedCount').textContent = solved;
+
+  // Spawn particles at both dots
+  const lv = activeLevelData;
+  for (const [wx, wy] of [lv.blue, lv.red]) {
+    const [sx, sy] = toScreen(wx, wy);
+    for (let i = 0; i < 50; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 1;
+      particles.push({
+        x: sx, y: sy,
+        vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 2,
+        life: 1,
+        color: Math.random() > 0.5 ? '#00aaff' : '#ff3355',
+        r: Math.random()*5+2
+      });
+    }
+  }
+
+  // Animate then show overlay
+  let f = 0;
+  function ploop() { draw(); if (++f < 60) requestAnimationFrame(ploop); else showWin(acc); }
+  ploop();
+}
+
+function showWin(acc) {
+  document.getElementById('successEq').textContent = buildEqString(m, b);
+  document.getElementById('successScore').textContent = `ACCURACY: ${Math.round(acc*100)}%  •  LEVEL ${currentLevel+1} COMPLETE`;
+  document.getElementById('successBanner').classList.add('show');
+  document.getElementById('statusText').textContent = 'SOLVED!';
+}
+
+// ─── LEVEL LOAD ──────────────────────────────────────────────────────────────
+function loadLevel(idx) {
+  currentLevel = idx;
+  // Generate or fetch level data
+  if (idx < FIXED_LEVELS.length) {
+    activeLevelData = FIXED_LEVELS[idx];
+  } else {
+    activeLevelData = generateRandomLevel();
+  }
+
+  won = false;
+  particles = [];
+  document.getElementById('successBanner').classList.remove('show');
+  document.getElementById('levelNum').textContent = idx + 1;
+  document.getElementById('statusText').textContent = 'ADJUST m AND b TO MATCH THE DOTS';
+
+  // Reset sliders and inputs to 0
+  document.getElementById('mSlider').value = 0;
+  document.getElementById('bSlider').value = 0;
+  document.getElementById('mInput').value  = 0;
+  document.getElementById('bInput').value  = 0;
+  m = 0; b = 0;
+
+  const lv = activeLevelData;
+  document.getElementById('bluePt').textContent = `(${lv.blue[0]}, ${lv.blue[1]})`;
+  document.getElementById('redPt').textContent  = `(${lv.red[0]}, ${lv.red[1]})`;
+
+  // Update button states — only fixed-level buttons exist
+  document.querySelectorAll('.level-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+
+  updateUI();
+}
+
+// ─── LEVEL BUTTONS (fixed levels only + ∞ random indicator) ──────────────────
+const lbContainer = document.getElementById('levelBtns');
+FIXED_LEVELS.forEach((_, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'level-btn';
+  btn.textContent = `LVL ${i + 1}`;
+  btn.addEventListener('click', () => loadLevel(i));
+  lbContainer.appendChild(btn);
+});
+// Indicator that levels continue randomly after the fixed ones
+const randLabel = document.createElement('div');
+randLabel.style.cssText = 'font-size:0.6rem;color:var(--dim);letter-spacing:0.08em;margin-top:4px;width:100%;';
+randLabel.textContent = 'LVL 4+ → ∞ RANDOM';
+lbContainer.appendChild(randLabel);
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+document.getElementById('mSlider').addEventListener('input', () => updateUI('mSlider'));
+document.getElementById('bSlider').addEventListener('input', () => updateUI('bSlider'));
+document.getElementById('mInput').addEventListener('input', () => updateUI('mInput'));
+document.getElementById('bInput').addEventListener('input', () => updateUI('bInput'));
+document.getElementById('mInput').addEventListener('keydown', e => { if (e.key === 'Enter') updateUI('mInput'); });
+document.getElementById('bInput').addEventListener('keydown', e => { if (e.key === 'Enter') updateUI('bInput'); });
+document.getElementById('submitBtn').addEventListener('click', submit);
+document.getElementById('nextBtn').addEventListener('click', () => {
+  freestyleMode = false;
+  document.getElementById('freestyleBtn').classList.remove('active');
+  loadLevel(currentLevel + 1);
+});
+
+// Freestyle mode
+let freestyleMode = false;
+document.getElementById('freestyleBtn').addEventListener('click', () => {
+  freestyleMode = !freestyleMode;
+  const btn = document.getElementById('freestyleBtn');
+  btn.classList.toggle('active', freestyleMode);
+  btn.textContent = freestyleMode ? '⬡ FREESTYLE: ON' : '⬡ FREESTYLE MODE';
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+
+  if (freestyleMode) {
+    // Hide accuracy/submit — no right answer to check
+    document.getElementById('submitBtn').style.opacity = '0.3';
+    document.getElementById('submitBtn').style.pointerEvents = 'none';
+    document.getElementById('statusText').textContent = 'FREESTYLE — PLACE DOTS BY CLICKING THE GRID';
+    document.getElementById('levelNum').textContent = '∞';
+    won = false;
+    document.getElementById('successBanner').classList.remove('show');
+    // Start with fresh random points
+    activeLevelData = generateRandomLevel();
+    const lv = activeLevelData;
+    document.getElementById('bluePt').textContent = `(${lv.blue[0]}, ${lv.blue[1]})`;
+    document.getElementById('redPt').textContent  = `(${lv.red[0]}, ${lv.red[1]})`;
+    updateUI();
+  } else {
+    document.getElementById('submitBtn').style.opacity = '';
+    document.getElementById('submitBtn').style.pointerEvents = '';
+    loadLevel(currentLevel);
+  }
+});
+
+// Freestyle: click canvas to place dots
+let freestylePlacing = 0; // 0=blue next, 1=red next
+document.getElementById('c').addEventListener('click', (e) => {
+  if (!freestyleMode) return;
+  const rect = canvas.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  // Screen → world
+  const s = Math.min(canvas.width, canvas.height) / (WORLD * 2);
+  const wx = Math.round((px - canvas.width/2)  / s);
+  const wy = Math.round(-(py - canvas.height/2) / s);
+  const clamped = [Math.max(-9, Math.min(9, wx)), Math.max(-9, Math.min(9, wy))];
+
+  if (freestylePlacing === 0) {
+    activeLevelData = { blue: clamped, red: activeLevelData.red };
+    document.getElementById('bluePt').textContent = `(${clamped[0]}, ${clamped[1]})`;
+    document.getElementById('statusText').textContent = 'BLUE DOT PLACED — NOW CLICK FOR RED';
+    freestylePlacing = 1;
+  } else {
+    activeLevelData = { blue: activeLevelData.blue, red: clamped };
+    document.getElementById('redPt').textContent = `(${clamped[0]}, ${clamped[1]})`;
+    document.getElementById('statusText').textContent = 'FREESTYLE — CLICK TO REPOSITION BLUE DOT';
+    freestylePlacing = 0;
+    // Re-enable submit for this pair
+    document.getElementById('submitBtn').style.opacity = '';
+    document.getElementById('submitBtn').style.pointerEvents = '';
+  }
+  updateUI();
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+resize();
+loadLevel(0);
+</script>
+</body>
+</html>
