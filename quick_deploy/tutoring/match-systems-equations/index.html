@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Systems Match-Up!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f0e8;
+      --card: #fff;
+      --border: #ddd8cf;
+      --purple: #7c3aed;
+      --blue: #2563eb;
+      --teal: #0d9488;
+      --red: #dc2626;
+      --amber: #d97706;
+      --green: #059669;
+      --text: #1c1917;
+      --muted: #78716c;
+      --r: 13px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      background-image: radial-gradient(circle, #c0b8ac 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .wrap { max-width: 750px; margin: 0 auto; padding: 18px 14px 30px; }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .logo { font-family: 'Fredoka One', cursive; font-size: 26px; }
+    .logo em { color: var(--purple); font-style: normal; }
+    .hud { display: flex; gap: 16px; }
+    .hud-item { text-align: center; }
+    .hud-lbl {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted);
+    }
+    .hud-val { font-family: 'Fredoka One', cursive; font-size: 22px; line-height: 1; }
+    #hud-score { color: var(--purple); }
+    #hud-best  { color: var(--amber);  }
+
+    /* ── TIMER ── */
+    .timer-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .timer-lbl {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--muted); white-space: nowrap;
+    }
+    .timer-track {
+      flex: 1; height: 10px; background: #ddd6ca; border-radius: 5px; overflow: hidden;
+    }
+    .timer-fill {
+      height: 100%; width: 100%; border-radius: 5px;
+      background: var(--green);
+      transition: width 1s linear, background-color .4s;
+    }
+    .timer-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+      min-width: 28px; text-align: right;
+    }
+
+    /* ── STREAK ── */
+    .streak-row { min-height: 26px; text-align: center; margin-bottom: 8px; }
+    .streak-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, #ff8000, #ff3300);
+      color: #fff; border-radius: 99px; padding: 3px 14px;
+      font-size: 12px; font-weight: 800;
+      animation: pop .25s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    /* ── CARD GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 2.5px solid var(--border);
+      border-radius: var(--r);
+      min-height: 158px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 28px 10px 10px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, border-color .15s, background .15s;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+      user-select: none;
+      overflow: hidden;
+    }
+    .card:not(.matched):hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 22px rgba(0,0,0,.12);
+      border-color: #bbb;
+    }
+    .card.sel {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      box-shadow: 0 0 0 3px rgba(245,158,11,.28), 0 6px 16px rgba(0,0,0,.1);
+      transform: translateY(-4px);
+    }
+    .card.wrong { animation: shake .5s ease; }
+    .card.matched { cursor: default; animation: matchpop .45s cubic-bezier(.34,1.56,.64,1); }
+    .card.matched-parallel    { border-color: var(--red);   background: #fef2f2; }
+    .card.matched-intersecting{ border-color: var(--amber); background: #fffbeb; }
+    .card.matched-identical   { border-color: var(--green); background: #f0fdf4; }
+
+    /* badge */
+    .badge {
+      position: absolute; top: 7px; right: 8px;
+      font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .7px; padding: 2px 7px; border-radius: 20px;
+    }
+    .badge-word { background: #ede9fe; color: var(--purple); }
+    .badge-eq   { background: #dbeafe; color: var(--blue);   }
+    .badge-plot { background: #ccfbf1; color: var(--teal);   }
+
+    /* check icon on matched */
+    .card-check {
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      width: 22px; height: 22px; border-radius: 50%;
+      align-items: center; justify-content: center;
+      font-size: 12px; color: #fff; font-weight: 900;
+      display: none;
+    }
+    .matched .card-check { display: flex; animation: checkpop .3s cubic-bezier(.34,1.56,.64,1); }
+    .matched-parallel    .card-check { background: var(--red);   }
+    .matched-intersecting .card-check { background: var(--amber); }
+    .matched-identical   .card-check { background: var(--green); }
+
+    /* ── WORD CARD ── */
+    .word-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 24px; text-align: center; line-height: 1.05; margin-bottom: 4px;
+    }
+    .word-sub { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; margin-bottom: 8px; }
+    .word-pill {
+      display: inline-block; padding: 3px 11px; border-radius: 99px;
+      font-size: 11px; font-weight: 800;
+    }
+    .pill-parallel    { background: #fee2e2; color: var(--red);   }
+    .pill-intersecting{ background: #fef3c7; color: var(--amber); }
+    .pill-identical   { background: #d1fae5; color: var(--green); }
+
+    /* ── EQUATION CARD ── */
+    .eq-wrap { width: 100%; }
+    .eq-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 700; text-align: center;
+      padding: 5px 6px; border-radius: 6px; background: #f7f5f1;
+    }
+    .eq-line.l1 { color: #b83318; margin-bottom: 4px; }
+    .eq-line.l2 { color: #1a4fb4; }
+    .eq-sep {
+      text-align: center; font-size: 10px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+      margin: 3px 0;
+    }
+
+    /* ── PLOT CARD ── */
+    .plot-wrap { display: flex; justify-content: center; }
+    .plot-border {
+      border: 1.5px solid var(--border); border-radius: 8px;
+      overflow: hidden; line-height: 0;
+      width: 120px; height: 120px; flex-shrink: 0;
+    }
+    .plot-border svg { display: block; width: 100%; height: 100%; }
+
+    /* ── PROGRESS ── */
+    .progress {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-bottom: 12px;
+    }
+    .prog-item {
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 8px 10px; text-align: center; transition: all .3s;
+    }
+    .prog-item.done { border-style: solid; }
+    .prog-item.done-parallel    { border-color: var(--red);   background: #fef2f2; }
+    .prog-item.done-intersecting{ border-color: var(--amber); background: #fffbeb; }
+    .prog-item.done-identical   { border-color: var(--green); background: #f0fdf4; }
+    .prog-icon { font-size: 18px; }
+    .prog-lbl {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--muted); margin-top: 2px;
+    }
+    .prog-item.done-parallel    .prog-lbl { color: var(--red);   }
+    .prog-item.done-intersecting .prog-lbl { color: var(--amber); }
+    .prog-item.done-identical   .prog-lbl { color: var(--green); }
+
+    /* ── SCORE POPUP ── */
+    .spop {
+      position: fixed; font-family: 'Fredoka One', cursive; font-size: 24px;
+      pointer-events: none; z-index: 999;
+      animation: floatup 1.3s ease-out forwards;
+      transform: translateX(-50%);
+      text-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+
+    /* ── SKIP BUTTON ── */
+    .btn-skip {
+      background: #ede8df; border: none; border-radius: 8px;
+      padding: 8px 20px; font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800; cursor: pointer; color: var(--muted);
+      transition: background .15s;
+      display: block; margin: 0 auto;
+    }
+    .btn-skip:hover { background: #e0d8cc; }
+
+    /* ── MODAL ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,10,5,.55); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 50; padding: 16px;
+    }
+    .modal {
+      background: #fff; border-radius: 20px; padding: 28px 26px;
+      max-width: 460px; width: 100%;
+      box-shadow: 0 30px 70px rgba(0,0,0,.22);
+      animation: slideup .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    .modal-title { font-family: 'Fredoka One', cursive; font-size: 26px; margin-bottom: 5px; }
+    .modal-title em { color: var(--purple); font-style: normal; }
+    .modal-sub { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 16px; }
+
+    /* how-to-play */
+    .type-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .type-chip { padding: 8px 6px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 800; line-height: 1.4; }
+    .htp-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .htp-row { display: flex; gap: 10px; align-items: flex-start; }
+    .htp-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+    .htp-txt { font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--text); }
+    .htp-txt b { color: var(--purple); }
+
+    /* summary */
+    .sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+    .sum-stat { background: #f7f4ee; border-radius: 10px; padding: 11px 14px; text-align: center; }
+    .sum-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 2px; }
+    .sum-val { font-family: 'Fredoka One', cursive; font-size: 26px; line-height: 1; }
+    .total-block { text-align: center; margin: 14px 0; }
+    .total-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .total-val { font-family: 'Fredoka One', cursive; font-size: 46px; color: var(--purple); line-height: 1; }
+    .total-note { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+    /* button */
+    .btn-main {
+      display: block; width: 100%; padding: 13px 24px;
+      background: var(--purple); color: #fff; border: none; border-radius: 10px;
+      font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800;
+      cursor: pointer;
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .btn-main:hover {
+      background: #6d28d9; transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(109,40,217,.35);
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15%      { transform: translateX(-10px); }
+      30%      { transform: translateX(10px);  }
+      45%      { transform: translateX(-7px);  }
+      60%      { transform: translateX(7px);   }
+      75%      { transform: translateX(-4px);  }
+      90%      { transform: translateX(4px);   }
+    }
+    @keyframes matchpop {
+      0%   { transform: scale(.94); }
+      55%  { transform: scale(1.06); }
+      100% { transform: scale(1);   }
+    }
+    @keyframes floatup {
+      0%   { opacity: 1; transform: translateX(-50%) translateY(0);     }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-72px); }
+    }
+    @keyframes pop {
+      0%   { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes checkpop {
+      0%   { transform: translateX(-50%) translateY(-50%) scale(0); }
+      100% { transform: translateX(-50%) translateY(-50%) scale(1); }
+    }
+    @keyframes slideup {
+      0%   { opacity: 0; transform: translateY(18px) scale(.97); }
+      100% { opacity: 1; transform: translateY(0)    scale(1);   }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HOW TO PLAY MODAL ══════════════════════════════════════ -->
+<div id="modal-htp" class="overlay">
+  <div class="modal">
+    <div class="modal-title">Systems <em>Match-Up!</em></div>
+    <div class="modal-sub">Match groups of 3 cards that show the same type of system</div>
+
+    <div class="type-chips">
+      <div class="type-chip" style="background:#fee2e2;color:var(--red)">∥ Parallel<br><span style="font-weight:600;font-size:11px">0 solutions</span></div>
+      <div class="type-chip" style="background:#fef3c7;color:var(--amber)">✕ Intersecting<br><span style="font-weight:600;font-size:11px">1 solution</span></div>
+      <div class="type-chip" style="background:#d1fae5;color:var(--green)">∞ Identical<br><span style="font-weight:600;font-size:11px">∞ solutions</span></div>
+    </div>
+
+    <div class="htp-list">
+      <div class="htp-row">
+        <div class="htp-ico" style="background:#ede9fe">👆</div>
+        <div class="htp-txt">Click to select <b>3 cards</b>. Find the <b>word card</b>, <b>equation card</b>, and <b>graph card</b> that all show the same system type.</div>
+      </div>
+      <div class="htp-row">
+        <div class="htp-ico" style="background:#d1fae5">⭐</div>
+        <div class="htp-txt">Match correctly on the <b>first try</b> for a <b>+50 bonus</b>. Wrong guesses don't lose points — just the bonus.</div>
+      </div>
+      <div class="htp-row">
+        <div class="htp-ico" style="background:#fef3c7">🔥</div>
+        <div class="htp-txt">Chain correct matches for a <b>×1.5 streak multiplier</b>. One wrong guess resets it.</div>
+      </div>
+      <div class="htp-row">
+        <div class="htp-ico" style="background:#dbeafe">⏱</div>
+        <div class="htp-txt">120 seconds per round. Every second left becomes a <b>speed bonus point</b> when you finish!</div>
+      </div>
+    </div>
+
+    <button class="btn-main" id="btn-start">Let's Play! →</button>
+  </div>
+</div>
+
+<!-- ══ ROUND SUMMARY MODAL ═══════════════════════════════════ -->
+<div id="modal-summary" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">Round <em id="sum-round">1</em> Complete! 🎉</div>
+    <div class="sum-grid">
+      <div class="sum-stat">
+        <div class="sum-lbl">Base Score</div>
+        <div class="sum-val" id="sum-base">300</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-lbl">First-Try Bonus</div>
+        <div class="sum-val" id="sum-ft" style="color:var(--purple)">+0</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-lbl">Streak Bonus</div>
+        <div class="sum-val" id="sum-streak" style="color:var(--amber)">+0</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-lbl">Speed Bonus</div>
+        <div class="sum-val" id="sum-speed" style="color:var(--teal)">+0</div>
+      </div>
+    </div>
+    <div class="total-block">
+      <div class="total-lbl">Running Total</div>
+      <div class="total-val" id="sum-total">0</div>
+      <div class="total-note" id="sum-best-note"></div>
+    </div>
+    <button class="btn-main" id="btn-next">Next Round →</button>
+  </div>
+</div>
+
+<!-- ══ TIMES UP MODAL ════════════════════════════════════════ -->
+<div id="modal-timesup" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">Time's <em>Up!</em> ⏱</div>
+    <div class="modal-sub">You ran out of time — keep practicing!</div>
+    <div class="sum-grid">
+      <div class="sum-stat">
+        <div class="sum-lbl">Groups Found</div>
+        <div class="sum-val" id="tu-groups">0 / 3</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-lbl">Round Score</div>
+        <div class="sum-val" id="tu-score" style="color:var(--amber)">0</div>
+      </div>
+    </div>
+    <div class="total-block">
+      <div class="total-lbl">Running Total</div>
+      <div class="total-val" id="tu-total" style="color:var(--amber)">0</div>
+    </div>
+    <button class="btn-main" id="btn-tryagain">Try Again →</button>
+  </div>
+</div>
+
+<!-- ══ GAME ═══════════════════════════════════════════════════ -->
+<div class="wrap">
+  <header>
+    <div class="logo">Systems <em>Match-Up!</em></div>
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-lbl">Round</div>
+        <div class="hud-val" id="hud-round">1</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-lbl">Score</div>
+        <div class="hud-val" id="hud-score">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-lbl">Best</div>
+        <div class="hud-val" id="hud-best">0</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="timer-row">
+    <div class="timer-lbl">⏱ Time</div>
+    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="timer-num" id="timer-num">60</div>
+  </div>
+
+  <div class="streak-row" id="streak-row"></div>
+
+  <div class="grid" id="card-grid"></div>
+
+  <div class="progress">
+    <div class="prog-item" id="prog-parallel">
+      <div class="prog-icon">∥</div>
+      <div class="prog-lbl">Parallel</div>
+    </div>
+    <div class="prog-item" id="prog-intersecting">
+      <div class="prog-icon">✕</div>
+      <div class="prog-lbl">Intersecting</div>
+    </div>
+    <div class="prog-item" id="prog-identical">
+      <div class="prog-icon">∞</div>
+      <div class="prog-lbl">Identical</div>
+    </div>
+  </div>
+
+  <button class="btn-skip" id="btn-skip">Skip Round</button>
+</div>
+
+<script>
+// ================================================================
+// CONFIG & STATE
+// ================================================================
+const TIMER_SEC = 120;
+const SVG_SZ   = 120;  // internal SVG coordinate size
+const SVG_PAD  = 11;   // padding inside SVG
+const RANGE    = 4;    // coordinate range [-4, 4]
+const PLOT_SZ  = SVG_SZ - 2 * SVG_PAD;
+
+let best = +(localStorage.getItem('sysmatch_best') || 0);
+
+const S = {
+  round: 1, total: 0, timeLeft: TIMER_SEC, timer: null,
+  sel: [], matched: new Set(), wrongSet: new Set(),
+  streak: 0, roundBase: 0, roundFT: 0, roundStreak: 0,
+  cards: [], active: false
+};
+
+// ================================================================
+// MATH HELPERS
+// ================================================================
+function ri(lo, hi, excl = []) {
+  let v, n = 0;
+  do { v = Math.floor(Math.random() * (hi - lo + 1)) + lo; n++; }
+  while (excl.includes(v) && n < 200);
+  return v;
+}
+
+function fmtSI(m, b) {
+  // slope-intercept: y = mx + b
+  let s = 'y = ';
+  if      (m ===  1) s += 'x';
+  else if (m === -1) s += '\u2212x';
+  else if (m <   0)  s += `\u2212${-m}x`;
+  else               s += `${m}x`;
+  if      (b > 0) s += ` + ${b}`;
+  else if (b < 0) s += ` \u2212 ${-b}`;
+  return s;
+}
+
+function fmtStd(m, b) {
+  // 2mx − 2y = −2b  (equiv to y = mx + b)
+  const A = 2 * m, C = -2 * b;
+  let s = '';
+  if      (A ===  1) s += 'x';
+  else if (A === -1) s += '\u2212x';
+  else if (A <   0)  s += `\u2212${-A}x`;
+  else               s += `${A}x`;
+  s += ' \u2212 2y';
+  if      (C === 0) s += ' = 0';
+  else if (C > 0)   s += ` = ${C}`;
+  else              s += ` = \u2212${-C}`;
+  return s;
+}
+
+// ================================================================
+// SYSTEM GENERATION
+// ================================================================
+function genParallel() {
+  const m = ri(-3, 3, [0]);
+  const b1 = ri(-4, 4), b2 = ri(-4, 4, [b1]);
+  return { type: 'parallel', l1: { m, b: b1 }, l2: { m, b: b2 } };
+}
+
+function genIntersecting() {
+  let m1, m2, b1, b2, ix, iy, tries = 0;
+  do {
+    m1 = ri(-3, 3, [0]); m2 = ri(-3, 3, [0, m1]);
+    b1 = ri(-3, 3);      b2 = ri(-3, 3);
+    ix = (b2 - b1) / (m1 - m2);
+    iy = m1 * ix + b1;
+    tries++;
+  } while ((Math.abs(ix) > 3 || Math.abs(iy) > 3) && tries < 80);
+  return { type: 'intersecting', l1: { m: m1, b: b1 }, l2: { m: m2, b: b2 } };
+}
+
+function genIdentical() {
+  const m = ri(-3, 3, [0]), b = ri(-3, 3);
+  return { type: 'identical', l1: { m, b }, l2: { m, b } };
+}
+
+function genSystems() { return [genParallel(), genIntersecting(), genIdentical()]; }
+
+// ================================================================
+// SVG GENERATION
+// ================================================================
+const toX = x => SVG_PAD + (x + RANGE) / (2 * RANGE) * PLOT_SZ;
+const toY = y => SVG_PAD + (RANGE - y) / (2 * RANGE) * PLOT_SZ;
+
+function clipLine(m, b) {
+  const R = RANGE, pts = [];
+  // left & right boundaries
+  let y = m * (-R) + b;
+  if (y >= -R && y <= R) pts.push([-R, y]);
+  y = m * R + b;
+  if (y >= -R && y <= R) pts.push([R, y]);
+  // top & bottom boundaries
+  if (m !== 0) {
+    let x = (-R - b) / m;
+    if (x > -R && x < R) pts.push([x, -R]);
+    x = (R - b) / m;
+    if (x > -R && x < R) pts.push([x, R]);
+  } else {
+    return Math.abs(b) <= R ? [[-R, b], [R, b]] : null;
+  }
+  const u = [];
+  for (const p of pts) {
+    if (!u.some(q => Math.abs(q[0]-p[0]) < .01 && Math.abs(q[1]-p[1]) < .01)) u.push(p);
+  }
+  u.sort((a, b) => a[0] - b[0]);
+  return u.length >= 2 ? [u[0], u[u.length-1]] : null;
+}
+
+function lineSVG(m, b, color, dashed, dx=0, dy=0) {
+  const pts = clipLine(m, b);
+  if (!pts) return '';
+  const x1=(toX(pts[0][0])+dx).toFixed(1), y1=(toY(pts[0][1])+dy).toFixed(1);
+  const x2=(toX(pts[1][0])+dx).toFixed(1), y2=(toY(pts[1][1])+dy).toFixed(1);
+  const da = dashed ? 'stroke-dasharray="5 4"' : '';
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" ${da}/>`;
+}
+
+function buildSVG(sys) {
+  const { type, l1, l2 } = sys;
+  const C1='#c8391f', C2='#2458b8';
+  let s = `<rect width="${SVG_SZ}" height="${SVG_SZ}" fill="#f9f8f5" rx="6"/>`;
+
+  // grid
+  for (let i=-RANGE; i<=RANGE; i++) {
+    const gx=toX(i).toFixed(1), gy=toY(i).toFixed(1);
+    s += `<line x1="${SVG_PAD}" y1="${gy}" x2="${SVG_SZ-SVG_PAD}" y2="${gy}" stroke="#e4e0d8" stroke-width=".5"/>`;
+    s += `<line x1="${gx}" y1="${SVG_PAD}" x2="${gx}" y2="${SVG_SZ-SVG_PAD}" stroke="#e4e0d8" stroke-width=".5"/>`;
+  }
+  // axes
+  s += `<line x1="${SVG_PAD}" y1="${toY(0).toFixed(1)}" x2="${SVG_SZ-SVG_PAD}" y2="${toY(0).toFixed(1)}" stroke="#aaa" stroke-width="1"/>`;
+  s += `<line x1="${toX(0).toFixed(1)}" y1="${SVG_PAD}" x2="${toX(0).toFixed(1)}" y2="${SVG_SZ-SVG_PAD}" stroke="#aaa" stroke-width="1"/>`;
+
+  // lines
+  s += lineSVG(l1.m, l1.b, C1, false);
+  if (type === 'identical') {
+    s += lineSVG(l2.m, l2.b, C2, true, 3, -3); // same line, offset+dashed
+  } else {
+    s += lineSVG(l2.m, l2.b, C2, false);
+  }
+
+  return `<svg viewBox="0 0 ${SVG_SZ} ${SVG_SZ}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// ================================================================
+// CARD DATA & RENDERING
+// ================================================================
+const TYPE_INFO = {
+  parallel:    { label:'Parallel',     sub:'0 Solutions',  sols:'No solution',        icon:'∥', pillCls:'pill-parallel',     color:'var(--red)'   },
+  intersecting:{ label:'Intersecting', sub:'1 Solution',   sols:'One solution',       icon:'✕', pillCls:'pill-intersecting', color:'var(--amber)'  },
+  identical:   { label:'Identical',    sub:'∞ Solutions',  sols:'Infinite solutions', icon:'∞', pillCls:'pill-identical',    color:'var(--green)'  }
+};
+
+function mkCards(systems) {
+  const cards = [];
+  let id = 0;
+  for (const sys of systems) {
+    cards.push({ id: id++, kind: 'word', type: sys.type, sys, matched: false });
+    cards.push({ id: id++, kind: 'eq',   type: sys.type, sys, matched: false });
+    cards.push({ id: id++, kind: 'plot', type: sys.type, sys, matched: false });
+  }
+  for (let i = cards.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  return cards;
+}
+
+function wordHTML(c) {
+  const t = TYPE_INFO[c.type];
+  return `<div style="text-align:center">
+    <div class="word-title" style="color:${t.color}">${t.label}</div>
+    <div class="word-sub">${t.sub}</div>
+    <div class="word-pill ${t.pillCls}">${t.sols}</div>
+  </div>`;
+}
+
+function eqHTML(c) {
+  const { type, sys:{l1,l2} } = c;
+  const e1 = fmtSI(l1.m, l1.b);
+  const e2 = type === 'identical' ? fmtStd(l2.m, l2.b) : fmtSI(l2.m, l2.b);
+  return `<div class="eq-wrap">
+    <div class="eq-line l1">${e1}</div>
+    <div class="eq-sep">and</div>
+    <div class="eq-line l2">${e2}</div>
+  </div>`;
+}
+
+function plotHTML(c) {
+  return `<div class="plot-wrap"><div class="plot-border">${buildSVG(c.sys)}</div></div>`;
+}
+
+function cardHTML(c) {
+  const badgeCls = { word:'badge-word', eq:'badge-eq', plot:'badge-plot' }[c.kind];
+  const badgeTxt = { word:'Word', eq:'Equation', plot:'Graph' }[c.kind];
+  const inner = c.kind==='word' ? wordHTML(c) : c.kind==='eq' ? eqHTML(c) : plotHTML(c);
+  return `<div class="card" id="c${c.id}" data-id="${c.id}" onclick="tap(${c.id})">
+    <div class="card-check">✓</div>
+    <div class="badge ${badgeCls}">${badgeTxt}</div>
+    ${inner}
+  </div>`;
+}
+
+// ================================================================
+// SELECTION & MATCHING
+// ================================================================
+function tap(id) {
+  if (!S.active) return;
+  const card = S.cards.find(c => c.id === id);
+  if (!card || card.matched) return;
+  const el = document.getElementById('c'+id);
+  const idx = S.sel.indexOf(id);
+  if (idx !== -1) {
+    S.sel.splice(idx, 1);
+    el.classList.remove('sel');
+    return;
+  }
+  if (S.sel.length >= 3) return;
+  S.sel.push(id);
+  el.classList.add('sel');
+  if (S.sel.length === 3) setTimeout(evalSel, 130);
+}
+
+function evalSel() {
+  const ids = [...S.sel];
+  const cards = ids.map(id => S.cards.find(c => c.id === id));
+  const t = cards[0].type;
+  if (cards.every(c => c.type === t)) correct(cards, t);
+  else wrong(cards);
+}
+
+function correct(cards, matchType) {
+  const base = 100;
+  const ft = !cards.some(c => S.wrongSet.has(c.id));
+  const ftBonus = ft ? 50 : 0;
+  const streakMult = S.streak >= 1 ? 1.5 : 1.0;
+  const streakExtra = S.streak >= 1 ? Math.round((base + ftBonus) * 0.5) : 0;
+  const earned = Math.round((base + ftBonus) * streakMult);
+
+  S.roundBase   += base;
+  S.roundFT     += ftBonus;
+  S.roundStreak += streakExtra;
+  S.total       += earned;
+  S.streak++;
+
+  cards.forEach(c => {
+    c.matched = true;
+    const el = document.getElementById('c'+c.id);
+    el.classList.remove('sel');
+    el.classList.add('matched', 'matched-'+matchType);
+  });
+  S.sel = [];
+  S.matched.add(matchType);
+
+  updScore(); updStreak(); updProg(matchType);
+
+  const r = document.getElementById('c'+cards[1].id).getBoundingClientRect();
+  popup(`+${earned}`, r.left + r.width/2, r.top, '#059669');
+
+  if (S.matched.size === 3) setTimeout(() => endRound(true), 650);
+}
+
+function wrong(cards) {
+  cards.forEach(c => S.wrongSet.add(c.id));
+  S.streak = 0;
+  updStreak();
+  cards.forEach(c => {
+    const el = document.getElementById('c'+c.id);
+    el.classList.add('wrong');
+    el.classList.remove('sel');
+    setTimeout(() => el.classList.remove('wrong'), 550);
+  });
+  S.sel = [];
+}
+
+// ================================================================
+// UI UPDATES
+// ================================================================
+function updScore() { document.getElementById('hud-score').textContent = S.total; }
+
+function updStreak() {
+  const row = document.getElementById('streak-row');
+  row.innerHTML = S.streak >= 2
+    ? `<div class="streak-chip">🔥 ${S.streak}× Streak &nbsp;·&nbsp; ×1.5 Bonus!</div>`
+    : '';
+}
+
+function updProg(type) {
+  const el = document.getElementById('prog-'+type);
+  el.classList.add('done', 'done-'+type);
+  el.querySelector('.prog-icon').textContent = '✓';
+}
+
+function popup(text, x, y, color='#059669') {
+  const el = document.createElement('div');
+  el.className = 'spop';
+  el.textContent = text;
+  el.style.cssText = `left:${x}px;top:${y}px;color:${color}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1400);
+}
+
+// ================================================================
+// TIMER
+// ================================================================
+function startTimer() {
+  S.timeLeft = TIMER_SEC;
+  updTimer();
+  S.timer = setInterval(() => {
+    S.timeLeft--;
+    updTimer();
+    if (S.timeLeft <= 0) { clearInterval(S.timer); endRound(false); }
+  }, 1000);
+}
+
+function stopTimer() { clearInterval(S.timer); S.timer = null; }
+
+function updTimer() {
+  const pct = (S.timeLeft / TIMER_SEC) * 100;
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = pct + '%';
+  fill.style.backgroundColor =
+    S.timeLeft <= 10 ? 'var(--red)' :
+    S.timeLeft <= 25 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('timer-num').textContent = S.timeLeft;
+}
+
+// ================================================================
+// ROUND MANAGEMENT
+// ================================================================
+function startRound() {
+  Object.assign(S, {
+    sel:[], matched:new Set(), wrongSet:new Set(),
+    streak:0, roundBase:0, roundFT:0, roundStreak:0, active:true
+  });
+  const systems = genSystems();
+  S.cards = mkCards(systems);
+
+  document.getElementById('hud-round').textContent = S.round;
+  document.getElementById('hud-best').textContent  = best;
+  document.getElementById('card-grid').innerHTML   = S.cards.map(cardHTML).join('');
+
+  for (const type of ['parallel','intersecting','identical']) {
+    const el = document.getElementById('prog-'+type);
+    el.className = 'prog-item';
+    el.querySelector('.prog-icon').textContent = TYPE_INFO[type].icon;
+  }
+
+  updScore(); updStreak(); startTimer();
+}
+
+function endRound(success) {
+  stopTimer(); S.active = false;
+
+  if (success) {
+    const spd = S.timeLeft;
+    S.total += spd;
+    if (S.total > best) {
+      best = S.total;
+      localStorage.setItem('sysmatch_best', best);
+    }
+    updScore();
+    document.getElementById('hud-best').textContent = best;
+
+    document.getElementById('sum-round').textContent  = S.round;
+    document.getElementById('sum-base').textContent   = S.roundBase;
+    document.getElementById('sum-ft').textContent     = '+' + S.roundFT;
+    document.getElementById('sum-streak').textContent = '+' + S.roundStreak;
+    document.getElementById('sum-speed').textContent  = '+' + spd;
+    document.getElementById('sum-total').textContent  = S.total;
+    document.getElementById('sum-best-note').textContent =
+      S.total >= best ? '🏆 New best score!' : `All-time best: ${best}`;
+    document.getElementById('modal-summary').classList.remove('hidden');
+  } else {
+    document.getElementById('tu-groups').textContent = `${S.matched.size} / 3`;
+    document.getElementById('tu-score').textContent  = S.roundBase + S.roundFT + S.roundStreak;
+    document.getElementById('tu-total').textContent  = S.total;
+    document.getElementById('modal-timesup').classList.remove('hidden');
+  }
+}
+
+// ================================================================
+// EVENT LISTENERS
+// ================================================================
+document.getElementById('btn-start').addEventListener('click', () => {
+  document.getElementById('modal-htp').classList.add('hidden');
+  startRound();
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+  document.getElementById('modal-summary').classList.add('hidden');
+  S.round++; startRound();
+});
+document.getElementById('btn-tryagain').addEventListener('click', () => {
+  document.getElementById('modal-timesup').classList.add('hidden');
+  S.round++; startRound();
+});
+document.getElementById('btn-skip').addEventListener('click', () => {
+  if (S.active) endRound(false);
+});
+</script>
+</body>
+</html>
