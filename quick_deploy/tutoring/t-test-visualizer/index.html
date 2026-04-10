@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two-Sample t-Test Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #2563EB; --coral: #DC2626; --purple: #7C3AED;
+    --g50: #F9FAFB; --g100: #F3F4F6; --g200: #E5E7EB;
+    --g400: #9CA3AF; --g600: #4B5563; --g800: #1F2937; --g900: #111827;
+    --r: 8px; --rl: 12px;
+    --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  body { font-family: var(--sans); background: #F8F7F4; color: var(--g900); min-height: 100vh; }
+
+  .app-header {
+    background: var(--g900); color: white;
+    padding: 14px 24px; display: flex; align-items: baseline; gap: 12px;
+    border-bottom: 3px solid var(--blue);
+  }
+  .app-header h1 { font-size: 17px; font-weight: 600; }
+  .app-header span { font-size: 12px; color: var(--g400); }
+
+  .main { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 51px); }
+
+  .sidebar {
+    background: white; border-right: 1px solid var(--g200);
+    padding: 16px 14px; overflow-y: auto;
+  }
+  .section-title {
+    font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--g400); margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--g100);
+  }
+  .sample-block { margin-bottom: 14px; }
+  .sample-header { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+  .sample-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sample-header h3 { font-size: 13px; font-weight: 600; }
+
+  .ctrl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .ctrl-label { font-size: 12px; color: var(--g600); width: 30px; flex-shrink: 0; }
+  input[type=range] { flex: 1; height: 4px; cursor: pointer; accent-color: var(--g800); min-width: 0; }
+  input[type=number] {
+    width: 54px; font-size: 12px; font-family: var(--sans);
+    border: 1px solid var(--g200); border-radius: 5px;
+    padding: 3px 5px; text-align: right; color: var(--g800);
+    background: white; flex-shrink: 0; -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number]:focus { outline: none; border-color: var(--blue); }
+
+  .divider { height: 1px; background: var(--g100); margin: 12px 0; }
+
+  .toggle-row {
+    display: flex; margin-bottom: 8px;
+    border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden;
+  }
+  .toggle-btn {
+    flex: 1; padding: 6px 0; font-size: 12px; font-family: var(--sans);
+    border: none; background: white; cursor: pointer; color: var(--g600);
+    transition: background .12s, color .12s;
+  }
+  .toggle-btn.active { background: var(--g900); color: white; font-weight: 500; }
+  .toggle-btn:first-child { border-right: 1px solid var(--g200); }
+  .toggle-btn + .toggle-btn { border-left: 1px solid var(--g200); }
+
+  .alpha-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .alpha-label { font-size: 12px; color: var(--g600); width: 14px; flex-shrink: 0; }
+  .quick-btns { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+  .quick-btn {
+    font-size: 11px; font-family: var(--sans); padding: 2px 7px;
+    border: 1px solid var(--g200); background: white; border-radius: 4px;
+    cursor: pointer; color: var(--g600);
+  }
+  .quick-btn:hover { background: var(--g100); }
+
+  .content { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+  .stat-card {
+    background: var(--g50); border: 1px solid var(--g200); border-radius: var(--r);
+    padding: 9px 10px; text-align: center;
+  }
+  .stat-card.hl { background: var(--g900); border-color: var(--g900); }
+  .stat-name { font-size: 10px; color: var(--g400); margin-bottom: 3px; line-height: 1.3; }
+  .stat-card.hl .stat-name { color: #6B7280; }
+  .stat-num { font-size: 20px; font-weight: 500; color: var(--g900); line-height: 1; }
+  .stat-card.hl .stat-num { color: white; }
+  .stat-sub { font-size: 10px; color: var(--g400); margin-top: 2px; min-height: 13px; }
+  .stat-card.hl .stat-sub { color: #6B7280; }
+
+  .panel {
+    background: white; border: 1px solid var(--g200); border-radius: var(--rl); padding: 13px 16px;
+  }
+  .panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .panel-title { font-size: 12px; font-weight: 500; color: var(--g600); }
+  .zoom-btn {
+    font-size: 11px; font-family: var(--sans); padding: 2px 8px;
+    border: 1px solid var(--g200); background: white; border-radius: 4px;
+    cursor: pointer; color: var(--g600); white-space: nowrap;
+  }
+  .zoom-btn:hover { background: var(--g100); }
+  .zoom-btn.active { background: var(--g900); color: white; border-color: var(--g900); }
+  .chart-wrap { position: relative; width: 100%; }
+
+  .legend-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--g600); }
+  .ls { width: 22px; height: 3px; border-radius: 2px; }
+  .ls-dot { width: 22px; height: 2px;
+    background: repeating-linear-gradient(90deg,#888 0 2px,transparent 2px 5px); }
+  .ls-purple-dash { width: 22px; height: 2px;
+    background: repeating-linear-gradient(90deg,var(--purple) 0 5px,transparent 5px 9px); }
+  .ls-red { width: 22px; height: 2.5px; background: var(--coral); }
+
+  .formula-box {
+    background: var(--g50); border: 1px solid var(--g200); border-radius: var(--r);
+    padding: 11px 14px; font-size: 12px; color: var(--g600); line-height: 2.1;
+  }
+  .formula-line { display: block; }
+  .formula-line .lhs { display: inline-block; min-width: 52px; color: var(--g400); }
+
+  /* hypothesis box */
+  .hyp-box {
+    background: white; border: 1px solid var(--g200); border-radius: var(--rl);
+    padding: 11px 16px; display: flex; gap: 32px; flex-wrap: wrap;
+  }
+  .hyp-item { display: flex; flex-direction: column; gap: 2px; }
+  .hyp-tag { font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--g400); }
+  .hyp-text { font-size: 13px; color: var(--g800); }
+  .crit-note { font-size: 11px; color: var(--g400); text-align: right; margin-top: 4px; }
+  .sig-pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+
+  .chart-tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--g900); color: white; font-family: var(--sans);
+    font-size: 11px; padding: 6px 9px; border-radius: 6px;
+    white-space: nowrap; z-index: 10; line-height: 1.6;
+    transform: translate(-50%, calc(-100% - 8px));
+  }
+
+  /* decision banner */
+  .decision-banner {
+    border-radius: var(--rl); padding: 20px 24px;
+    border: 2px solid transparent; transition: background .25s, border-color .25s;
+  }
+  .decision-banner.sig  { background: #F0FDF4; border-color: #16A34A; }
+  .decision-banner.nosig{ background: #FFF7ED; border-color: #D97706; }
+  .db-row {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .db-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; min-width: 110px; flex-shrink: 0; color: var(--g600);
+  }
+  .db-value { font-size: 17px; font-weight: 600; }
+  .verdict-row {
+    display: flex; align-items: center; gap: 18px;
+    padding-top: 14px; margin-top: 8px;
+    border-top: 2px solid rgba(0,0,0,0.08);
+  }
+  .verdict-badge { font-size: 21px; font-weight: 700; padding: 6px 18px; border-radius: 8px; }
+  .verdict-sub { font-size: 13px; color: var(--g600); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Two-Sample t-Test Explorer</h1>
+  <span id="headerSub" style="font-size:12px;color:var(--g400);">Welch's independent samples</span>
+</div>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="section-title">Samples</div>
+    <div class="sample-block">
+      <div class="sample-header">
+        <div class="sample-dot" style="background:#2563EB"></div>
+        <h3>Sample A</h3>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">M<sub>A</sub></span>
+        <input type="range" id="m1" min="-100" max="100" step="0.5" value="0">
+        <input type="number" id="m1n" min="-100" max="100" step="0.5" value="0">
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">s<sub>A</sub></span>
+        <input type="range" id="s1" min="0.1" max="100" step="0.5" value="1">
+        <input type="number" id="s1n" min="0.1" max="100" step="0.5" value="1">
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">n<sub>A</sub></span>
+        <input type="range" id="n1" min="2" max="200" step="1" value="30">
+        <input type="number" id="n1n" min="2" max="200" step="1" value="30">
+      </div>
+    </div>
+
+    <div class="sample-block">
+      <div class="sample-header">
+        <div class="sample-dot" style="background:#DC2626"></div>
+        <h3>Sample B</h3>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">M<sub>B</sub></span>
+        <input type="range" id="m2" min="-100" max="100" step="0.5" value="1">
+        <input type="number" id="m2n" min="-100" max="100" step="0.5" value="1">
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">s<sub>B</sub></span>
+        <input type="range" id="s2" min="0.1" max="100" step="0.5" value="1">
+        <input type="number" id="s2n" min="0.1" max="100" step="0.5" value="1">
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">n<sub>B</sub></span>
+        <input type="range" id="n2" min="2" max="200" step="1" value="30">
+        <input type="number" id="n2n" min="2" max="200" step="1" value="30">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">Test Settings</div>
+
+    <div style="font-size:11px;color:var(--g600);margin-bottom:5px;">Test type</div>
+    <div class="toggle-row" style="margin-bottom:6px;">
+      <button class="toggle-btn" id="btn-welch" onclick="setTestType('welch')">Welch's</button>
+      <button class="toggle-btn active" id="btn-student" onclick="setTestType('student')">Student's</button>
+    </div>
+    <p style="font-size:10px;color:var(--g400);line-height:1.5;margin-bottom:10px;">Are you pooling variance across both samples? Then Student's. If you're allowing the variance of population A and population B to differ, use Welch's. Welch's is more common in the real world.</p>
+
+    <div style="font-size:11px;color:var(--g600);margin-bottom:5px;">Tails</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="btn-two" onclick="setTails(2)">Two-tailed</button>
+      <button class="toggle-btn" id="btn-gt" onclick="setTails('gt')">One-tailed (&gt;)</button>
+      <button class="toggle-btn" id="btn-lt" onclick="setTails('lt')">One-tailed (&lt;)</button>
+    </div>
+
+    <div style="font-size:11px;color:var(--g600);margin-bottom:5px;margin-top:8px;">Significance level</div>
+    <div class="alpha-row">
+      <span class="alpha-label">α</span>
+      <input type="range" id="alpha" min="0.001" max="0.20" step="0.001" value="0.05">
+      <input type="number" id="alphan" min="0.001" max="0.20" step="0.001" value="0.05">
+    </div>
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="setAlpha(0.10)">α = .10</button>
+      <button class="quick-btn" onclick="setAlpha(0.05)">α = .05</button>
+      <button class="quick-btn" onclick="setAlpha(0.01)">α = .01</button>
+      <button class="quick-btn" onclick="setAlpha(0.001)">α = .001</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-name">SE of difference</div>
+        <div class="stat-num" id="seVal">—</div>
+        <div class="stat-sub" id="seFormula">√(s²<sub>A</sub>/n<sub>A</sub> + s²<sub>B</sub>/n<sub>B</sub>)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-name">|M<sub>A</sub> − M<sub>B</sub>|</div>
+        <div class="stat-num" id="diffVal">—</div>
+        <div class="stat-sub">mean difference</div>
+      </div>
+      <div class="stat-card hl">
+        <div class="stat-name" id="tCardLabel">t<sup>calculated</sup> (Welch)</div>
+        <div class="stat-num" id="tVal">—</div>
+        <div class="stat-sub" id="dfVal">df —</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-name">p-value</div>
+        <div class="stat-num" id="pVal">—</div>
+        <div class="stat-sub" id="sigBadge"></div>
+      </div>
+    </div>
+
+    <!-- Hypotheses -->
+    <div class="hyp-box" id="hypBox">
+      <div class="hyp-item">
+        <span class="hyp-tag">H₀ (null hypothesis)</span>
+        <span class="hyp-text" id="hypNull">μ<sub>A</sub> = μ<sub>B</sub> &nbsp;(no difference between population means)</span>
+      </div>
+      <div class="hyp-item">
+        <span class="hyp-tag">H₁ (alternative hypothesis)</span>
+        <span class="hyp-text" id="hypAlt">μ<sub>A</sub> ≠ μ<sub>B</sub> &nbsp;(two-tailed)</span>
+      </div>
+    </div>
+
+    <!-- Panel 1: sample distributions -->
+    <div class="panel">
+      <div class="panel-title-row">
+        <span class="panel-title">Underlying sample distributions</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="ls" style="background:#2563EB"></div>Sample A</div>
+        <div class="legend-item"><div class="ls" style="background:#DC2626"></div>Sample B</div>
+        <div class="legend-item"><div class="ls-dot"></div>M</div>
+        <div class="legend-item"><span style="font-size:12px;color:var(--g600);line-height:1;font-family:monospace;">⊢—⊣</span>&nbsp;±1 SD</div>
+      </div>
+      <div class="chart-wrap" style="height:140px;">
+        <canvas id="rawChart" role="img" aria-label="Underlying normal distributions for samples A and B"></canvas>
+      </div>
+    </div>
+
+    <!-- Panel 2: sampling distributions with zoom -->
+    <div class="panel">
+      <div class="panel-title-row">
+        <span class="panel-title">Sampling distributions of M<sub>A</sub> and M<sub>B</sub></span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="zoom-btn" onclick="zoomDist('out')" title="Zoom out" style="font-size:15px;padding:1px 9px;line-height:1.4;">−</button>
+          <span id="zoomLabel" style="font-size:11px;color:var(--g400);min-width:44px;text-align:center;">×1.0</span>
+          <button class="zoom-btn" onclick="zoomDist('in')"  title="Zoom in"  style="font-size:15px;padding:1px 9px;line-height:1.4;">+</button>
+          <button class="zoom-btn" id="btnZoomReset" onclick="zoomDist('reset')" style="margin-left:2px;">Reset</button>
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="ls" style="background:#2563EB"></div>Sample A</div>
+        <div class="legend-item"><div class="ls" style="background:#DC2626"></div>Sample B</div>
+        <div class="legend-item"><div class="ls-dot"></div>M</div>
+        <div class="legend-item"><span style="font-size:12px;color:var(--g600);line-height:1;font-family:monospace;">⊢—⊣</span>&nbsp;±1 SEM</div>
+      </div>
+      <div class="chart-wrap" style="height:140px;">
+        <canvas id="distChart" role="img" aria-label="Sampling distributions of the mean for A and B"></canvas>
+      </div>
+    </div>
+
+    <!-- Panel 3: t-distribution -->
+    <div class="panel">
+      <div class="panel-title-row">
+        <span class="panel-title">t-distribution with t<sup>crit</sup> and t<sup>calculated</sup></span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="ls-purple-dash"></div>t<sup>crit</sup></div>
+        <div class="legend-item"><div class="ls-red"></div>t<sup>calculated</sup></div>
+        <div class="legend-item"><div class="ls" style="background:#FCA5A5"></div>rejection region</div>
+      </div>
+      <div class="chart-wrap" style="height:130px;">
+        <canvas id="tChart" role="img" aria-label="t-distribution with rejection region, t-crit, and t-calculated"></canvas>
+        <div class="chart-tooltip" id="tTip"></div>
+      </div>
+      <div class="crit-note" id="critNote"></div>
+    </div>
+
+    <!-- Formula -->
+    <div class="formula-box" id="formulaBox"></div>
+
+    <!-- Decision banner -->
+    <div class="decision-banner" id="decisionBanner">
+      <div class="db-row">
+        <span class="db-label">t-statistic</span>
+        <span class="db-value" id="dbTline"></span>
+      </div>
+      <div class="db-row">
+        <span class="db-label">p-value</span>
+        <span class="db-value" id="dbPline"></span>
+      </div>
+      <div class="verdict-row">
+        <span class="verdict-badge" id="dbVerdict"></span>
+        <span class="verdict-sub" id="dbNull"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── state ── */
+let tails = 2;
+let testType = 'student'; /* 'welch' | 'student' */
+let distZoom = 1;
+
+/* ── math ── */
+function norm(x, mu, sigma) {
+  return Math.exp(-0.5*((x-mu)/sigma)**2) / (sigma*Math.sqrt(2*Math.PI));
+}
+function linspace(a,b,n){ return Array.from({length:n},(_,i)=>a+(b-a)*i/(n-1)); }
+function lgamma(x){
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,
+    -1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];
+  let y=x,tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp);
+  let s=1.000000000190015; for(let j=0;j<6;j++) s+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*s/x);
+}
+function betaCF(x,a,b){
+  let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<1e-30)d=1e-30; d=1/d; let h=d;
+  for(let m=1;m<=200;m++){
+    let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30; c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;
+    d=1/d;h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30; c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;
+    d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<3e-7)break;
+  }
+  return h;
+}
+function incompleteBeta(x,a,b){
+  if(x<=0)return 0; if(x>=1)return 1;
+  return Math.exp(Math.log(x)*a+Math.log(1-x)*b-lgamma(a)-lgamma(b)+lgamma(a+b))/a*betaCF(x,a,b);
+}
+function tCDF(t,df){ return 1-0.5*incompleteBeta(df/(df+t*t),df/2,0.5); }
+function tDensity(x,df){
+  return Math.exp(lgamma((df+1)/2)-0.5*Math.log(df*Math.PI)-lgamma(df/2)-(df+1)/2*Math.log(1+x*x/df));
+}
+function welchDF(s1,n1,s2,n2){
+  const a=s1*s1/n1,b=s2*s2/n2; return (a+b)**2/(a*a/(n1-1)+b*b/(n2-1));
+}
+/* Student's (pooled-variance) helpers */
+function pooledVar(s1,n1,s2,n2){
+  return ((n1-1)*s1*s1 + (n2-1)*s2*s2) / (n1+n2-2);
+}
+function pooledSE(s1,n1,s2,n2){
+  return Math.sqrt(pooledVar(s1,n1,s2,n2) * (1/n1 + 1/n2));
+}
+function studentDF(n1,n2){ return n1+n2-2; }
+function tCritical(alpha,df,tails){
+  const p=tails===2?1-alpha/2:1-alpha; let lo=0,hi=20;
+  for(let i=0;i<80;i++){const m=(lo+hi)/2; if(tCDF(m,df)<p) lo=m; else hi=m;}
+  return (lo+hi)/2;
+}
+
+/* ── number formatting ── */
+/* strip trailing zeros after decimal, keep at least one sig fig */
+function fmt(v, dp){
+  /* format to dp decimal places, then strip trailing zeros */
+  const s = v.toFixed(dp);
+  return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
+}
+function fmtP(p){
+  if(p < 0.001) return '< .001';
+  /* 3 dp, strip trailing zeros */
+  return fmt(p, 3);
+}
+function fmtA(a){
+  /* alpha: 3 dp, strip trailing zeros */
+  return fmt(a, 3);
+}
+
+/* ── staples plugin ──
+   Draws ±spread brackets BELOW the x-axis baseline (outside the chart area).
+   No center dot. The bracket sits in the bottom padding. */
+const staplesPlugin = {
+  id: 'staples',
+  afterDraw(chart) {
+    const list = chart.options.plugins.staplesData;
+    if (!list || !list.length) return;
+    const {ctx, scales:{x}, chartArea} = chart;
+    const yBase = chartArea.bottom + 8;
+    const CAP = 5; /* cap extends only upward */
+    list.forEach(({mu, spread, color}) => {
+      const xMu = x.getPixelForValue(mu);
+      const xLo = x.getPixelForValue(mu - spread);
+      const xHi = x.getPixelForValue(mu + spread);
+      const lo  = Math.max(xLo, chartArea.left);
+      const hi  = Math.min(xHi, chartArea.right);
+      if(hi < lo) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([]);
+      /* horizontal bar */
+      ctx.beginPath(); ctx.moveTo(lo, yBase); ctx.lineTo(hi, yBase); ctx.stroke();
+      /* left cap — upward only */
+      if(xLo >= chartArea.left){
+        ctx.beginPath(); ctx.moveTo(xLo, yBase); ctx.lineTo(xLo, yBase - CAP); ctx.stroke();
+      }
+      /* right cap — upward only */
+      if(xHi <= chartArea.right){
+        ctx.beginPath(); ctx.moveTo(xHi, yBase); ctx.lineTo(xHi, yBase - CAP); ctx.stroke();
+      }
+      /* small dot at mean */
+      if(xMu >= chartArea.left && xMu <= chartArea.right){
+        ctx.beginPath();
+        ctx.arc(xMu, yBase, 2, 0, Math.PI*2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+  }
+};
+Chart.register(staplesPlugin);
+
+/* ── grids ── */
+const tXs = linspace(-6,6,500);
+
+/* ── scatter dataset helper ── */
+function scatterDs(color, dash){
+  return { type:'scatter', data:[], borderColor:color, backgroundColor:color,
+    showLine:true, pointRadius:0, borderWidth:2.5, borderDash:dash||[], tension:0, spanGaps:false };
+}
+
+/* ── rawChart ── */
+const rawChart = new Chart(document.getElementById('rawChart').getContext('2d'),{
+  type:'scatter',
+  data:{ datasets:[
+    /* 0 A curve */ { type:'line', data:[], borderColor:'#2563EB', backgroundColor:'#2563EB15',
+                      fill:'origin', pointRadius:0, borderWidth:2, tension:0, spanGaps:false },
+    /* 1 B curve */ { type:'line', data:[], borderColor:'#DC2626', backgroundColor:'#DC262615',
+                      fill:'origin', pointRadius:0, borderWidth:2, tension:0, spanGaps:false },
+    /* 2 A mean  */ { type:'scatter', data:[], borderColor:'#2563EB88', backgroundColor:'#2563EB88',
+                      showLine:true, pointRadius:0, borderWidth:1, borderDash:[2,3], tension:0, spanGaps:false },
+    /* 3 B mean  */ { type:'scatter', data:[], borderColor:'#DC262688', backgroundColor:'#DC262688',
+                      showLine:true, pointRadius:0, borderWidth:1, borderDash:[2,3], tension:0, spanGaps:false },
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false, animation:false,
+    layout:{ padding:{ bottom:22 } },
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        mode:'index', intersect:false,
+        filter: item => item.datasetIndex <= 1,
+        callbacks:{
+          title: items => items.length ? `x = ${items[0].raw.x.toFixed(2)}` : '',
+          label: item => ` ${['A','B'][item.datasetIndex]}: ${item.raw.y.toFixed(4)}`
+        }
+      },
+      staplesData:[]
+    },
+    scales:{
+      x:{ type:'linear',
+          ticks:{ color:'#9CA3AF', font:{size:10,family:'system-ui,sans-serif'}, maxTicksLimit:9, autoSkip:true },
+          grid:{color:'#F3F4F6'} },
+      y:{ display:false, min:0 }
+    }
+  }
+});
+
+/* ── distChart ── */
+const distChart = new Chart(document.getElementById('distChart').getContext('2d'),{
+  type:'scatter',
+  data:{ datasets:[
+    /* 0 A curve */ { type:'line', data:[], borderColor:'#2563EB', backgroundColor:'#2563EB15',
+                      fill:'origin', pointRadius:0, borderWidth:2, tension:0, spanGaps:false },
+    /* 1 B curve */ { type:'line', data:[], borderColor:'#DC2626', backgroundColor:'#DC262615',
+                      fill:'origin', pointRadius:0, borderWidth:2, tension:0, spanGaps:false },
+    /* 2 A mean  */ { type:'scatter', data:[], borderColor:'#2563EB88', backgroundColor:'#2563EB88',
+                      showLine:true, pointRadius:0, borderWidth:1, borderDash:[2,3], tension:0, spanGaps:false },
+    /* 3 B mean  */ { type:'scatter', data:[], borderColor:'#DC262688', backgroundColor:'#DC262688',
+                      showLine:true, pointRadius:0, borderWidth:1, borderDash:[2,3], tension:0, spanGaps:false },
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false, animation:false,
+    layout:{ padding:{ bottom:22 } },
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        mode:'index', intersect:false,
+        filter: item => item.datasetIndex <= 1,
+        callbacks:{
+          title: items => items.length ? `x = ${items[0].raw.x.toFixed(2)}` : '',
+          label: item => ` ${['A','B'][item.datasetIndex]}: ${item.raw.y.toFixed(4)}`
+        }
+      },
+      staplesData:[]
+    },
+    scales:{
+      x:{ type:'linear',
+          ticks:{ color:'#9CA3AF', font:{size:10,family:'system-ui,sans-serif'}, maxTicksLimit:9, autoSkip:true },
+          grid:{color:'#F3F4F6'} },
+      y:{ display:false, min:0 }
+    }
+  }
+});
+
+/* ── tChart ── */
+const tChart = new Chart(document.getElementById('tChart').getContext('2d'),{
+  type:'scatter',
+  data:{ datasets:[
+    /* 0 curve  */ { type:'line', data:[], borderColor:'#9CA3AF', backgroundColor:'transparent',
+                     fill:false, pointRadius:0, borderWidth:1.5, tension:0, spanGaps:false },
+    /* 1 reject */ { type:'line', data:[], borderColor:'transparent', backgroundColor:'#FCA5A580',
+                     fill:'origin', pointRadius:0, borderWidth:0, tension:0, spanGaps:false },
+    /* 2 tcrit  */ scatterDs('#7C3AED',[6,4]),
+    /* 3 tcalc  */ scatterDs('#DC2626',[]),
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false, animation:false,
+    plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+    scales:{
+      x:{ type:'linear', min:-6, max:6,
+          ticks:{ color:'#9CA3AF', font:{size:10,family:'system-ui,sans-serif'},
+                  stepSize:1, maxTicksLimit:13 },
+          grid:{color:'#F3F4F6'} },
+      y:{ display:false, min:0 }
+    }
+  }
+});
+
+/* ── hover tooltip on tChart ── */
+let currentDf = 28;
+const tTip = document.getElementById('tTip');
+document.getElementById('tChart').addEventListener('mousemove', e=>{
+  const rect = document.getElementById('tChart').getBoundingClientRect();
+  const xPx = e.clientX - rect.left;
+  const xVal = tChart.scales.x.getValueForPixel(xPx);
+  if(xVal==null||xVal<-6||xVal>6){ tTip.style.display='none'; return; }
+  const dens  = tDensity(xVal, currentDf).toFixed(4);
+  const pArea = tails===2
+    ? (2*(1-tCDF(Math.abs(xVal),currentDf))).toFixed(4)
+    : (1-tCDF(xVal,currentDf)).toFixed(4);
+  tTip.innerHTML = `t = ${xVal.toFixed(3)}<br>density: ${dens}<br>p (beyond): ${pArea}`;
+  tTip.style.display='block';
+  tTip.style.left = xPx+'px';
+  tTip.style.top  = (e.clientY-rect.top)+'px';
+});
+document.getElementById('tChart').addEventListener('mouseleave',()=>{ tTip.style.display='none'; });
+
+/* ── zoom for distChart ── */
+/* distZoom < 1 = zoomed in (narrower x range), > 1 = zoomed out (wider) */
+/* distZoom === 1 → same half-range as raw chart (±12) */
+function zoomDist(dir){
+  const STEP = 1.4;
+  const MIN  = 0.02;
+  const MAX  = 4;
+  if(dir==='in')    distZoom = Math.max(MIN, distZoom / STEP);
+  else if(dir==='out') distZoom = Math.min(MAX, distZoom * STEP);
+  else              distZoom = 1;
+  /* update label: show relative magnification vs reset (distZoom=1) */
+  const mag = 1 / distZoom; /* >1 means zoomed in */
+  const lbl = mag >= 10 ? `×${mag.toFixed(0)}`
+            : mag >= 1  ? `×${mag.toFixed(1)}`
+            : `×${mag.toFixed(2)}`;
+  document.getElementById('zoomLabel').textContent = lbl;
+  document.getElementById('btnZoomReset').classList.toggle('active', distZoom !== 1);
+  update();
+}
+
+/* ── slider ↔ number box sync ── */
+const pairs=[['m1','m1n'],['s1','s1n'],['n1','n1n'],
+             ['m2','m2n'],['s2','s2n'],['n2','n2n'],['alpha','alphan']];
+function clamp(v,mn,mx){ return Math.min(Math.max(v,mn),mx); }
+pairs.forEach(([rid,nid])=>{
+  const r=document.getElementById(rid), n=document.getElementById(nid);
+  r.addEventListener('input',()=>{ n.value=r.value; update(); });
+  n.addEventListener('change',()=>{
+    const cv=clamp(parseFloat(n.value)||0,parseFloat(r.min),parseFloat(r.max));
+    n.value=cv; r.value=cv; update();
+  });
+  n.addEventListener('keydown',e=>{ if(e.key==='Enter') n.dispatchEvent(new Event('change')); });
+});
+
+function setTestType(type){
+  testType = type;
+  document.getElementById('btn-welch').classList.toggle('active', type==='welch');
+  document.getElementById('btn-student').classList.toggle('active', type==='student');
+  update();
+}
+function setTails(t){
+  tails=t;
+  document.getElementById('btn-two').classList.toggle('active', t===2);
+  document.getElementById('btn-gt').classList.toggle('active',  t==='gt');
+  document.getElementById('btn-lt').classList.toggle('active',  t==='lt');
+  update();
+}
+function setAlpha(a){
+  document.getElementById('alpha').value=a;
+  document.getElementById('alphan').value=a.toFixed(3);
+  update();
+}
+
+function gv(id){ return parseFloat(document.getElementById(id).value); }
+function setEl(id,v){ document.getElementById(id).innerHTML=v; }
+
+/* ── main update ── */
+function update(){
+  const m1=gv('m1'), s1=gv('s1'), n1=Math.round(gv('n1'));
+  const m2=gv('m2'), s2=gv('s2'), n2=Math.round(gv('n2'));
+  const alpha=gv('alpha');
+
+  /* ── raw chart ── */
+  /* fit x range to show ±3.5 SD around each mean, plus a little padding */
+  const rawPad  = Math.max(s1, s2) * 0.4;
+  const rawMin  = Math.min(m1 - 3.5*s1, m2 - 3.5*s2) - rawPad;
+  const rawMax  = Math.max(m1 + 3.5*s1, m2 + 3.5*s2) + rawPad;
+  const rawXs   = linspace(rawMin, rawMax, 500);
+  const rawRange = rawMax - rawMin;
+  const rawStep  = rawRange <= 2 ? 0.2 : rawRange <= 10 ? 1 : rawRange <= 50 ? 5 : rawRange <= 200 ? 20 : 50;
+
+  const rawPeak1=norm(m1,m1,s1), rawPeak2=norm(m2,m2,s2);
+  rawChart.data.datasets[0].data = rawXs.map(x=>({x, y:norm(x,m1,s1)}));
+  rawChart.data.datasets[1].data = rawXs.map(x=>({x, y:norm(x,m2,s2)}));
+  rawChart.data.datasets[2].data = [{x:m1,y:0},{x:m1,y:rawPeak1*1.05}];
+  rawChart.data.datasets[3].data = [{x:m2,y:0},{x:m2,y:rawPeak2*1.05}];
+  rawChart.options.scales.x.min = rawMin;
+  rawChart.options.scales.x.max = rawMax;
+  rawChart.options.scales.x.ticks.stepSize = rawStep;
+  rawChart.options.plugins.staplesData = [
+    {mu:m1, spread:s1, color:'#2563EB'},
+    {mu:m2, spread:s2, color:'#DC2626'}
+  ];
+  rawChart.update();
+
+  /* ── dist chart ── */
+  const se1=s1/Math.sqrt(n1), se2=s2/Math.sqrt(n2);
+  const mid = (m1+m2)/2;
+  /* when distZoom===1, match the raw chart's x range exactly */
+  const naturalHalf = Math.max(4*Math.max(se1,se2), Math.abs(m1-mid)+4*Math.max(se1,se2));
+  const resetHalf   = (rawMax - rawMin) / 2;
+  const resetCentre = (rawMin + rawMax) / 2;
+  const distHalf    = distZoom === 1 ? resetHalf : Math.max(naturalHalf * distZoom, 0.01);
+  const distCentre  = distZoom === 1 ? resetCentre : mid;
+  const distMin = distCentre - distHalf;
+  const distMax = distCentre + distHalf;
+  const distXs  = linspace(distMin, distMax, 500);
+  const distRange = distMax - distMin;
+  const distStep  = distRange <= 1 ? 0.1 : distRange <= 5 ? 0.5 : distRange <= 20 ? 2 : distRange <= 100 ? 10 : 20;
+
+  const distPeak1=norm(m1,m1,se1), distPeak2=norm(m2,m2,se2);
+  distChart.data.datasets[0].data = distXs.map(x=>({x, y:norm(x,m1,se1)}));
+  distChart.data.datasets[1].data = distXs.map(x=>({x, y:norm(x,m2,se2)}));
+  distChart.data.datasets[2].data = [{x:m1,y:0},{x:m1,y:distPeak1*1.05}];
+  distChart.data.datasets[3].data = [{x:m2,y:0},{x:m2,y:distPeak2*1.05}];
+  distChart.options.plugins.staplesData = [
+    {mu:m1, spread:se1, color:'#2563EB'},
+    {mu:m2, spread:se2, color:'#DC2626'}
+  ];
+  distChart.options.scales.x.min = distMin;
+  distChart.options.scales.x.max = distMax;
+  /* stepSize: pick something reasonable */
+  const range = distMax - distMin;
+  const step = range <= 1 ? 0.1 : range <= 3 ? 0.5 : range <= 8 ? 1 : 2;
+  distChart.options.scales.x.ticks.stepSize = distStep;
+  distChart.update();
+
+  /* ── stats ── */
+  const isWelch = testType === 'welch';
+  const se   = isWelch ? Math.sqrt(s1*s1/n1+s2*s2/n2) : pooledSE(s1,n1,s2,n2);
+  const diff = Math.abs(m1-m2);
+  const t    = (m1-m2)/se;
+  const df   = isWelch ? welchDF(s1,n1,s2,n2) : studentDF(n1,n2);
+  const tc   = tails===2 ? tCritical(alpha,df,2)
+             : tails==='gt' ? tCritical(alpha,df,1)
+             : -tCritical(alpha,df,1);
+  const p    = tails===2  ? 2*(1-tCDF(Math.abs(t),df))
+             : tails==='gt' ? 1-tCDF(t,df)
+             :                tCDF(t,df);
+  currentDf  = df;
+
+  /* update dynamic labels */
+  const testLabel = isWelch ? 'Welch' : 'Student';
+  document.getElementById('headerSub').textContent =
+    isWelch ? "Welch's independent samples" : "Student's independent samples (pooled variance)";
+  setEl('tCardLabel', `t<sup>calculated</sup> (${testLabel})`);
+  setEl('seFormula', isWelch
+    ? '√(s²<sub>A</sub>/n<sub>A</sub> + s²<sub>B</sub>/n<sub>B</sub>)'
+    : 's<sub>p</sub> · √(1/n<sub>A</sub> + 1/n<sub>B</sub>)');
+
+  setEl('seVal',   se.toFixed(3));
+  setEl('diffVal', diff.toFixed(3));
+  setEl('tVal',    t.toFixed(3));
+  setEl('dfVal',   'df = '+(isWelch ? df.toFixed(1) : df.toFixed(0)));
+  setEl('pVal',    fmtP(p));
+
+  document.getElementById('sigBadge').innerHTML = p<alpha
+    ? '<span class="sig-pill" style="background:#DCFCE7;color:#15803D;">significant ✓</span>'
+    : '<span class="sig-pill" style="background:#F3F4F6;color:#9CA3AF;">not significant</span>';
+
+  /* ── tChart ── */
+  const peak = tDensity(0,df);
+  const top  = peak * 1.1;
+  tChart.data.datasets[0].data = tXs.map(x=>({x, y:tDensity(x,df)}));
+  tChart.data.datasets[1].data = tails===2
+    ? tXs.map(x=>({x, y: Math.abs(x)>=Math.abs(tc) ? tDensity(x,df) : 0}))
+    : tails==='gt'
+    ? tXs.map(x=>({x, y: x>=tc  ? tDensity(x,df) : 0}))
+    : tXs.map(x=>({x, y: x<=tc  ? tDensity(x,df) : 0}));
+
+  const critPts = [{x:tc,y:0},{x:tc,y:top}];
+  if(tails===2) critPts.push({x:NaN,y:NaN},{x:-tc,y:0},{x:-tc,y:top});
+  tChart.data.datasets[2].data = critPts;
+
+  const tDisp = Math.max(-5.95, Math.min(5.95, t));
+  tChart.data.datasets[3].data = [{x:tDisp,y:0},{x:tDisp,y:top}];
+  tChart.update();
+
+  const critStr = tails===2 ? `±${tCritical(alpha,df,2).toFixed(3)}`
+                : tails==='gt' ? tc.toFixed(3)
+                : tc.toFixed(3);
+  const tailLabel = tails===2 ? 'two-tailed'
+                  : tails==='gt' ? 'one-tailed (>)' : 'one-tailed (<)';
+  const dfStr   = isWelch ? df.toFixed(1) : df.toFixed(0);
+  document.getElementById('critNote').textContent =
+    `t\u1D9C\u02B3\u1D35\u1D9C = ${critStr}  |  ${tailLabel}  |  α = ${fmtA(alpha)}  |  df = ${dfStr}`;
+  document.getElementById('hypAlt').innerHTML = tails===2
+    ? 'μ<sub>A</sub> ≠ μ<sub>B</sub> &nbsp;(two-tailed)'
+    : tails==='gt'
+    ? 'μ<sub>A</sub> &gt; μ<sub>B</sub> &nbsp;(one-tailed, right)'
+    : 'μ<sub>A</sub> &lt; μ<sub>B</sub> &nbsp;(one-tailed, left)';
+
+  /* formula box */
+  const seFormulaTxt = isWelch
+    ? `√(s²<sub>A</sub>/n<sub>A</sub> + s²<sub>B</sub>/n<sub>B</sub>) = √(${(s1*s1).toFixed(2)}/${n1} + ${(s2*s2).toFixed(2)}/${n2})`
+    : `s<sub>p</sub>·√(1/n<sub>A</sub>+1/n<sub>B</sub>), &nbsp;s²<sub>p</sub> = [(n<sub>A</sub>−1)s²<sub>A</sub>+(n<sub>B</sub>−1)s²<sub>B</sub>]/(n<sub>A</sub>+n<sub>B</sub>−2) = ${pooledVar(s1,n1,s2,n2).toFixed(3)}`;
+  setEl('formulaBox',
+    `<span class="formula-line"><span class="lhs">SE</span>= ${seFormulaTxt} = <strong>${se.toFixed(3)}</strong></span>`+
+    `<span class="formula-line"><span class="lhs">df</span>= ${dfStr}${isWelch?' (Welch–Satterthwaite)':' (n\u2081+n\u2082\u22122)'}</span>`+
+    `<span class="formula-line"><span class="lhs">t<sup>crit</sup></span>= ${critStr}</span>`+
+    `<span class="formula-line"><span class="lhs">t<sup>calc</sup></span>= (M<sub>A</sub> − M<sub>B</sub>) / SE = (${m1.toFixed(2)} − ${m2.toFixed(2)}) / ${se.toFixed(3)} = <strong>${t.toFixed(3)}</strong></span>`
+  );
+
+  /* ── decision banner ── */
+  const sig      = p < alpha;
+  /* For one-tailed, compare signed t to signed tc; for two-tailed compare |t| to |tc| */
+  const tCmp     = tails===2
+    ? (Math.abs(t) > Math.abs(tc) ? '>' : Math.abs(t) < Math.abs(tc) ? '<' : '=')
+    : (t > tc ? '>' : t < tc ? '<' : '=');
+  const tLhs     = tails===2 ? `|t<sup>calc</sup>|` : `t<sup>calc</sup>`;
+  const tLhsVal  = tails===2 ? Math.abs(t).toFixed(3) : t.toFixed(3);
+  const tRhsVal  = tc.toFixed(3);
+  const pCmp     = p < alpha ? '<' : p > alpha ? '>' : '=';
+  const pStr     = fmtP(p);
+  const alphaStr = fmtA(alpha);
+
+  document.getElementById('decisionBanner').className = 'decision-banner '+(sig?'sig':'nosig');
+
+  document.getElementById('dbTline').innerHTML =
+    `${tLhs} ${tCmp} t<sup>crit</sup> &nbsp;&nbsp;`+
+    `<span style="color:var(--g400);font-size:14px;font-weight:400;">${tLhsVal} ${tCmp} ${tRhsVal}</span>`;
+
+  /* p row: p < α,  .001 < .05 */
+  document.getElementById('dbPline').innerHTML =
+    `p ${pCmp} α &nbsp;&nbsp;`+
+    `<span style="color:var(--g400);font-size:14px;font-weight:400;">${pStr} ${pCmp} ${alphaStr}</span>`;
+
+  const vBadge = document.getElementById('dbVerdict');
+  const vNull  = document.getElementById('dbNull');
+  if(sig){
+    vBadge.textContent = 'Significant';
+    vBadge.style.cssText = 'font-size:21px;font-weight:700;padding:6px 18px;border-radius:8px;background:#DCFCE7;color:#15803D;';
+    vNull.innerHTML = '<strong>Reject H₀</strong> — the difference between sample means is statistically significant.';
+  } else {
+    vBadge.textContent = 'Not significant';
+    vBadge.style.cssText = 'font-size:21px;font-weight:700;padding:6px 18px;border-radius:8px;background:#FEF3C7;color:#92400E;';
+    vNull.innerHTML = '<strong>Fail to reject H₀</strong> — insufficient evidence that the sample means differ.';
+  }
+}
+
+update();
+</script>
+</body>
+</html>
