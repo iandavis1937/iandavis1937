@@ -194,6 +194,11 @@
         <input type="number" id="s1n" min="0.1" max="100" step="0.5" value="1">
       </div>
       <div class="ctrl-row">
+        <span class="ctrl-label">SS<sub>A</sub></span>
+        <input type="range" id="ss1" min="0.01" max="10000" step="1" value="29">
+        <input type="number" id="ss1n" min="0.01" step="0.01" value="29">
+      </div>
+      <div class="ctrl-row">
         <span class="ctrl-label">n<sub>A</sub></span>
         <input type="range" id="n1" min="2" max="200" step="1" value="30">
         <input type="number" id="n1n" min="2" max="200" step="1" value="30">
@@ -214,6 +219,11 @@
         <span class="ctrl-label">s<sub>B</sub></span>
         <input type="range" id="s2" min="0.1" max="100" step="0.5" value="1">
         <input type="number" id="s2n" min="0.1" max="100" step="0.5" value="1">
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">SS<sub>B</sub></span>
+        <input type="range" id="ss2" min="0.01" max="10000" step="1" value="29">
+        <input type="number" id="ss2n" min="0.01" step="0.01" value="29">
       </div>
       <div class="ctrl-row">
         <span class="ctrl-label">n<sub>B</sub></span>
@@ -634,8 +644,7 @@ function zoomDist(dir){
 }
 
 /* ── slider ↔ number box sync ── */
-const pairs=[['m1','m1n'],['s1','s1n'],['n1','n1n'],
-             ['m2','m2n'],['s2','s2n'],['n2','n2n'],['alpha','alphan']];
+const pairs=[['m1','m1n'],['m2','m2n'],['alpha','alphan']];
 function clamp(v,mn,mx){ return Math.min(Math.max(v,mn),mx); }
 pairs.forEach(([rid,nid])=>{
   const r=document.getElementById(rid), n=document.getElementById(nid);
@@ -645,6 +654,64 @@ pairs.forEach(([rid,nid])=>{
     n.value=cv; r.value=cv; update();
   });
   n.addEventListener('keydown',e=>{ if(e.key==='Enter') n.dispatchEvent(new Event('change')); });
+});
+
+/* ── SS ↔ s bidirectional sync ── */
+/* SS = (n−1)·s²   →   s = √(SS/(n−1)) */
+function ssFromS(s,n){ return (n-1)*s*s; }
+function sFromSS(ss,n){ return Math.sqrt(Math.max(ss,0)/Math.max(n-1,1)); }
+function fmtSS(ss){
+  return ss>=100 ? ss.toFixed(1) : ss>=1 ? ss.toFixed(2) : ss.toFixed(4);
+}
+function syncSSFromS(idx){
+  const s=gv('s'+idx), n=Math.round(gv('n'+idx));
+  const ss=ssFromS(s,n);
+  const sr=document.getElementById('ss'+idx);
+  sr.value=Math.min(ss,parseFloat(sr.max));
+  document.getElementById('ss'+idx+'n').value=fmtSS(ss);
+}
+
+/* ── s and n controls (with SS sync) ── */
+[1,2].forEach(idx=>{
+  const sR=document.getElementById('s'+idx),  sN=document.getElementById('s'+idx+'n');
+  const nR=document.getElementById('n'+idx),  nN=document.getElementById('n'+idx+'n');
+  const ssR=document.getElementById('ss'+idx),ssN=document.getElementById('ss'+idx+'n');
+
+  /* s slider/input → sync SS */
+  sR.addEventListener('input',()=>{ sN.value=sR.value; syncSSFromS(idx); update(); });
+  sN.addEventListener('change',()=>{
+    const cv=clamp(parseFloat(sN.value)||0,parseFloat(sR.min),parseFloat(sR.max));
+    sN.value=cv; sR.value=cv; syncSSFromS(idx); update();
+  });
+  sN.addEventListener('keydown',e=>{ if(e.key==='Enter') sN.dispatchEvent(new Event('change')); });
+
+  /* n slider/input → sync SS (SS = (n−1)·s² changes when n changes) */
+  nR.addEventListener('input',()=>{ nN.value=nR.value; syncSSFromS(idx); update(); });
+  nN.addEventListener('change',()=>{
+    const cv=clamp(parseFloat(nN.value)||0,parseFloat(nR.min),parseFloat(nR.max));
+    nN.value=cv; nR.value=cv; syncSSFromS(idx); update();
+  });
+  nN.addEventListener('keydown',e=>{ if(e.key==='Enter') nN.dispatchEvent(new Event('change')); });
+
+  /* SS slider/input → derive s, update s controls */
+  function applySSChange(ssVal){
+    const n=Math.round(parseFloat(nR.value));
+    let s=sFromSS(ssVal,n);
+    s=clamp(s,parseFloat(sR.min),parseFloat(sR.max));
+    sR.value=s; sN.value=fmt(s,4);
+    /* reflect actual SS back (may differ from ssVal if s was clamped) */
+    const actualSS=ssFromS(s,n);
+    ssR.value=Math.min(actualSS,parseFloat(ssR.max));
+    ssN.value=fmtSS(actualSS);
+    update();
+  }
+
+  ssR.addEventListener('input',()=>{ applySSChange(parseFloat(ssR.value)); });
+  ssN.addEventListener('change',()=>{
+    const val=Math.max(parseFloat(ssN.value)||0.01,0.01);
+    applySSChange(val);
+  });
+  ssN.addEventListener('keydown',e=>{ if(e.key==='Enter') ssN.dispatchEvent(new Event('change')); });
 });
 
 function setTestType(type){
@@ -843,7 +910,7 @@ function update(){
   }
 }
 
-update();
+syncSSFromS(1); syncSSFromS(2); update();
 </script>
 </body>
 </html>
