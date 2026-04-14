@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diving Judge Problems — Mean & Median Practice</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f7f4; color: #1a1a18; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
+  .page-sub { font-size: 14px; color: #5f5e5a; margin-bottom: 2rem; }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .nav button { font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: transparent; color: #5f5e5a; cursor: pointer; transition: all 0.15s; }
+  .nav button.active { background: #e8e6e0; color: #1a1a18; border-color: #888780; font-weight: 500; }
+  .nav button:hover:not(.active) { background: #f1efe8; }
+  .problem { display: none; }
+  .problem.active { display: block; }
+  .scenario { background: #e8e6e0; border-left: 3px solid #378ADD; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 15px; line-height: 1.7; color: #1a1a18; }
+  .scores-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+  .score-chip { background: #e6f1fb; color: #185fa5; border-radius: 8px; padding: 6px 14px; font-size: 15px; font-weight: 500; }
+  .score-chip.unknown { background: #faeeda; color: #854f0b; }
+  .question-block { border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; background: #fff; }
+  .question-block h3 { font-size: 15px; font-weight: 500; margin: 0 0 0.5rem; }
+  .question-block p { font-size: 14px; color: #5f5e5a; margin: 0 0 0.75rem; line-height: 1.6; }
+  .answer-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .answer-row input { width: 100px; padding: 6px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: #fff; color: #1a1a18; outline: none; }
+  .answer-row input:focus { border-color: #378ADD; box-shadow: 0 0 0 2px #b5d4f4; }
+  .answer-row button.check-btn { font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: transparent; color: #5f5e5a; cursor: pointer; }
+  .answer-row button.check-btn:hover { background: #f1efe8; }
+  .feedback { margin-top: 0.5rem; font-size: 13px; line-height: 1.5; padding: 6px 10px; border-radius: 8px; display: none; }
+  .feedback.correct { background: #eaf3de; color: #3b6d11; display: block; }
+  .feedback.wrong { background: #fcebeb; color: #a32d2d; display: block; }
+  .hint-btn { font-size: 12px; color: #888780; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 4px 0; }
+  .hint { font-size: 13px; color: #5f5e5a; margin-top: 0.5rem; padding: 8px 12px; background: #f1efe8; border-radius: 8px; display: none; line-height: 1.6; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 500; margin-bottom: 0.75rem; }
+  .tag-mean { background: #e6f1fb; color: #185fa5; }
+  .tag-median { background: #eeedfe; color: #3c3489; }
+  .tag-both { background: #faeeda; color: #854f0b; }
+  h2.ptitle { font-size: 17px; font-weight: 500; margin: 0 0 0.25rem; }
+  .subtitle { font-size: 13px; color: #5f5e5a; margin: 0 0 1rem; }
+  .threshold-line { font-size: 14px; color: #5f5e5a; margin-bottom: 1rem; }
+  .threshold-line strong { color: #1a1a18; }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a18; color: #f1efe8; }
+    .scenario { background: #2c2c2a; color: #f1efe8; }
+    .score-chip { background: #042c53; color: #85b7eb; }
+    .score-chip.unknown { background: #412402; color: #ef9f27; }
+    .question-block { background: #2c2c2a; border-color: #444441; }
+    .question-block p, .subtitle, .threshold-line, .hint-btn { color: #b4b2a9; }
+    .answer-row input { background: #1a1a18; color: #f1efe8; border-color: #444441; }
+    .nav button { border-color: #444441; color: #b4b2a9; }
+    .nav button.active { background: #444441; color: #f1efe8; }
+    .nav button:hover:not(.active) { background: #2c2c2a; }
+    .hint { background: #2c2c2a; color: #b4b2a9; }
+    .feedback.correct { background: #173404; color: #97c459; }
+    .feedback.wrong { background: #501313; color: #f09595; }
+    .tag-mean { background: #042c53; color: #85b7eb; }
+    .tag-median { background: #26215c; color: #afa9ec; }
+    .tag-both { background: #412402; color: #ef9f27; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Diving Judge Problems</h1>
+  <p class="page-sub">Mean &amp; median practice — high school statistics</p>
+
+  <div class="nav">
+    <button class="active" onclick="show(0)">Problem 1</button>
+    <button onclick="show(1)">Problem 2</button>
+    <button onclick="show(2)">Problem 3</button>
+    <button onclick="show(3)">Problem 4</button>
+    <button onclick="show(4)">Problem 5</button>
+  </div>
+
+  <!-- PROBLEM 1 -->
+  <div class="problem active" id="p0">
+    <span class="tag tag-mean">Mean</span>
+    <h2 class="ptitle">Problem 1 — The Belly Flop Redemption</h2>
+    <p class="subtitle">Difficulty: Basic mean with a target</p>
+    <div class="scenario">
+      Marcus has been training for the Regional Diving Championship for six months — and by "training," we really mean he's been working as a lifeguard at the kiddy pool at the local park. Nonetheless, Marcus has made it to the final round. The panel of 7 judges has spoken, and 6 of them have turned in their scores. Marcus needs to beat his next closest competitor with a <strong>mean score of at least 7.5</strong> to advance to the next round. If he can move on, he might be able to get the scholarship that will help him quit his job at the kiddy pool.
+    </div>
+    <div class="threshold-line">Target: Mean ≥ <strong>7.5</strong> &nbsp;|&nbsp; Scores so far (6 of 7 judges):</div>
+    <div class="scores-row">
+      <div class="score-chip">8.0</div>
+      <div class="score-chip">7.0</div>
+      <div class="score-chip">8.5</div>
+      <div class="score-chip">6.5</div>
+      <div class="score-chip">7.5</div>
+      <div class="score-chip">8.0</div>
+      <div class="score-chip unknown">?</div>
+    </div>
+    <div class="question-block">
+      <h3>Part A</h3>
+      <p>What is the sum of the 6 known scores?</p>
+      <div class="answer-row">
+        <input type="number" id="p0a-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p0a', 45.5, 0)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p0a-hint')">hint</button>
+      </div>
+      <div id="p0a-hint" class="hint">Add all 6 scores: 8.0 + 7.0 + 8.5 + 6.5 + 7.5 + 8.0</div>
+      <div class="feedback" id="p0a-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part B</h3>
+      <p>For Marcus to get a mean of exactly 7.5 across all 7 scores, what must the total of all 7 scores equal?</p>
+      <div class="answer-row">
+        <input type="number" id="p0b-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p0b', 52.5, 0)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p0b-hint')">hint</button>
+      </div>
+      <div id="p0b-hint" class="hint">If mean = total ÷ 7 = 7.5, then total = 7.5 × 7</div>
+      <div class="feedback" id="p0b-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part C</h3>
+      <p>What is the minimum score Marcus needs from the 7th judge?</p>
+      <div class="answer-row">
+        <input type="number" id="p0c-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p0c', 7.0, 0)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p0c-hint')">hint</button>
+      </div>
+      <div id="p0c-hint" class="hint">Minimum 7th score = required total − sum of 6 known scores</div>
+      <div class="feedback" id="p0c-fb"></div>
+    </div>
+  </div>
+
+  <!-- PROBLEM 2 -->
+  <div class="problem" id="p1">
+    <span class="tag tag-mean">Mean</span>
+    <h2 class="ptitle">Problem 2 — The Grudge Judge</h2>
+    <p class="subtitle">Difficulty: Reverse-engineering from a target mean</p>
+    <div class="scenario">
+      Sofia's dive was breathtaking — a perfect reverse 2.5 somersault with barely a ripple. Six judges are dazzled (as they should be). But Judge 7 is her former best friend's mom, who is still upset that Sofia stopped hanging out with her daughter to more seriously pursue diving. She has not yet submitted his score. Sofia needs a <strong>mean of at least 8.0</strong> to qualify. Her coach nervously calculates whether even a terrible score from Judge 7 will sink her chances — or whether Sofia's lead is big enough to survive the grudge.
+    </div>
+    <div class="threshold-line">Target: Mean ≥ <strong>8.0</strong> &nbsp;|&nbsp; Scores so far (6 of 7 judges):</div>
+    <div class="scores-row">
+      <div class="score-chip">9.0</div>
+      <div class="score-chip">8.5</div>
+      <div class="score-chip">8.0</div>
+      <div class="score-chip">9.5</div>
+      <div class="score-chip">7.5</div>
+      <div class="score-chip">8.5</div>
+      <div class="score-chip unknown">?</div>
+    </div>
+    <div class="question-block">
+      <h3>Part A</h3>
+      <p>What is the minimum score Judge 7 must give Sofia for her to advance?</p>
+      <div class="answer-row">
+        <input type="number" id="p1a-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p1a', 5.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p1a-hint')">hint</button>
+      </div>
+      <div id="p1a-hint" class="hint">Find the required total (8.0 × 7), subtract the sum of the 6 known scores (51.0). The result is the minimum 7th score.</div>
+      <div class="feedback" id="p1a-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part B</h3>
+      <p>Judge 7 gives Sofia a spiteful 4.0. What is her actual mean? Round to 2 decimal places.</p>
+      <div class="answer-row">
+        <input type="number" id="p1b-input" placeholder="answer" step="0.01">
+        <button class="check-btn" onclick="check('p1b', 7.86, 0.015)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p1b-hint')">hint</button>
+      </div>
+      <div id="p1b-hint" class="hint">(51.0 + 4.0) ÷ 7 = ?</div>
+      <div class="feedback" id="p1b-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part C</h3>
+      <p>By how much does Sofia miss the cutoff? (Give a positive number, rounded to 2 decimal places.)</p>
+      <div class="answer-row">
+        <input type="number" id="p1c-input" placeholder="answer" step="0.01">
+        <button class="check-btn" onclick="check('p1c', 0.14, 0.015)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p1c-hint')">hint</button>
+      </div>
+      <div id="p1c-hint" class="hint">8.0 − her actual mean</div>
+      <div class="feedback" id="p1c-fb"></div>
+    </div>
+  </div>
+
+  <!-- PROBLEM 3 -->
+  <div class="problem" id="p2">
+    <span class="tag tag-median">Median</span>
+    <h2 class="ptitle">Problem 3 — The Median Twist</h2>
+    <p class="subtitle">Difficulty: Finding the median with a missing value</p>
+    <div class="scenario">
+      Last year, a judge at Devon's swim club refused to award his nephew anything other than a 10 (who repeatedly landed flat on his back and was visibly not taking the competition seriously). Since then, the club has switched to a <em>median</em>-based scoring system. In this new system, the panel of 7 gives scores and the <strong>median score must be at least 7.0</strong> to qualify. Devon has received 6 scores so far. Her coach, who is hyperventilating with anxiety because she doesn't understand medians, is trying to figure out what score Devon needs from the final judge.
+    </div>
+    <div class="threshold-line">Target: Median ≥ <strong>7.0</strong> &nbsp;|&nbsp; Scores so far (6 of 7 judges):</div>
+    <div class="scores-row">
+      <div class="score-chip">5.5</div>
+      <div class="score-chip">8.0</div>
+      <div class="score-chip">7.5</div>
+      <div class="score-chip">6.0</div>
+      <div class="score-chip">9.0</div>
+      <div class="score-chip">7.0</div>
+      <div class="score-chip unknown">?</div>
+    </div>
+    <div class="question-block">
+      <h3>Part A</h3>
+      <p>Sort the 6 known scores from lowest to highest. What is the 3rd value in this sorted list?</p>
+      <div class="answer-row">
+        <input type="number" id="p2a-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p2a', 7.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p2a-hint')">hint</button>
+      </div>
+      <div id="p2a-hint" class="hint">Sorted: 5.5, 6.0, 7.0, 7.5, 8.0, 9.0 — what's in position 3?</div>
+      <div class="feedback" id="p2a-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part B</h3>
+      <p>With 7 total scores, the median will be the 4th value when all 7 are sorted. If the 7th score is 7.0, what is the full sorted list and what is the median?</p>
+      <div class="answer-row">
+        <input type="number" id="p2b-input" placeholder="median" step="0.5">
+        <button class="check-btn" onclick="check('p2b', 7.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p2b-hint')">hint</button>
+      </div>
+      <div id="p2b-hint" class="hint">Insert 7.0 into the sorted list: 5.5, 6.0, 7.0, 7.0, 7.5, 8.0, 9.0 — the 4th value is the median.</div>
+      <div class="feedback" id="p2b-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part C</h3>
+      <p>What is the minimum score the 7th judge can give so the median is at least 7.0? Explain why anything lower fails.</p>
+      <div class="answer-row">
+        <input type="number" id="p2c-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p2c', 7.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p2c-hint')">hint</button>
+      </div>
+      <div id="p2c-hint" class="hint">Try inserting 6.5 into the sorted list — what becomes the 4th value? Then try 7.0.</div>
+      <div class="feedback" id="p2c-fb"></div>
+    </div>
+  </div>
+
+  <!-- PROBLEM 4 -->
+  <div class="problem" id="p3">
+    <span class="tag tag-both">Mean + Median</span>
+    <h2 class="ptitle">Problem 4 — The Double Qualifier</h2>
+    <p class="subtitle">Difficulty: Satisfying two conditions simultaneously</p>
+    <div class="scenario">
+      The Tri-State Aquatic Federation has decided that their scoring system is not stressful enough. They're making an update to require that divers must qualify based on their <em>mean and median</em> scores. Priya must achieve a <strong>mean of at least 7.8</strong> AND a <strong>median of at least 8.0</strong>. She has received 6 scores. With one judge left — a retiree who struggles to stay awake and gives the same score every time — Priya and her coach are doing frantic math by the poolside.
+    </div>
+    <div class="threshold-line">Target: Mean ≥ <strong>7.8</strong> AND Median ≥ <strong>8.0</strong> &nbsp;|&nbsp; Scores so far:</div>
+    <div class="scores-row">
+      <div class="score-chip">9.0</div>
+      <div class="score-chip">6.5</div>
+      <div class="score-chip">8.0</div>
+      <div class="score-chip">7.5</div>
+      <div class="score-chip">8.5</div>
+      <div class="score-chip">7.0</div>
+      <div class="score-chip unknown">?</div>
+    </div>
+    <div class="question-block">
+      <h3>Part A</h3>
+      <p>What minimum score does Priya need from judge 7 to satisfy the <em>mean</em> condition? (Round to nearest 0.5 if the answer is not exact, rounding up.)</p>
+      <div class="answer-row">
+        <input type="number" id="p3a-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p3a', 8.1, 0.15)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p3a-hint')">hint</button>
+      </div>
+      <div id="p3a-hint" class="hint">Sum of 6 known = 46.5. Required total = 7.8 × 7 = 54.6. Minimum 7th score = 54.6 − 46.5</div>
+      <div class="feedback" id="p3a-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part B</h3>
+      <p>Sort the 6 known scores. For the median to be at least 8.0, the 4th value in the full sorted list of 7 must be ≥ 8.0. What minimum score from judge 7 guarantees this?</p>
+      <div class="answer-row">
+        <input type="number" id="p3b-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p3b', 8.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p3b-hint')">hint</button>
+      </div>
+      <div id="p3b-hint" class="hint">Sorted known scores: 6.5, 7.0, 7.5, 8.0, 8.5, 9.0. The current 4th is 8.0. Try inserting a score just below 8.0 — does the 4th value stay ≥ 8.0?</div>
+      <div class="feedback" id="p3b-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part C</h3>
+      <p>What single score satisfies BOTH conditions? Is there more than one possibility?</p>
+      <div class="answer-row">
+        <input type="number" id="p3c-input" placeholder="min qualifying score" step="0.5">
+        <button class="check-btn" onclick="check('p3c', 8.5, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p3c-hint')">hint</button>
+      </div>
+      <div id="p3c-hint" class="hint">The mean requires ≥ 8.1. The median requires ≥ 8.0. The binding constraint is the mean. Enter the minimum score (rounded to nearest 0.5) that clears both hurdles.</div>
+      <div class="feedback" id="p3c-fb"></div>
+    </div>
+  </div>
+
+  <!-- PROBLEM 5 -->
+  <div class="problem" id="p4">
+    <span class="tag tag-both">Mean + Median</span>
+    <h2 class="ptitle">Problem 5 — The Comeback Kid</h2>
+    <p class="subtitle">Difficulty: Working backwards from a known final mean; median impact analysis</p>
+    <div class="scenario">
+      Remy had a rough start — they slipped on the platform, ended up with a bloody nose mid-dive, and entered the water at approximately a 37° angle. Despite this, the 7-judge panel finished scoring and Remy's final mean was exactly <strong>6.8</strong>. The qualifying cutoff was 7.0. Remy's cousin — who came to watch — likes to relive disasters and think about their "what-ifs." She was daydreaming about the Titanic during the dive and only saw 6 of the 7 scores. Now she wants to know what would've happened if one judge had scored differently.
+    </div>
+    <div class="threshold-line">Final mean: <strong>6.8</strong> &nbsp;|&nbsp; Qualifying cutoff: <strong>7.0</strong> &nbsp;|&nbsp; 6 of 7 scores recovered:</div>
+    <div class="scores-row">
+      <div class="score-chip">7.5</div>
+      <div class="score-chip">6.0</div>
+      <div class="score-chip">8.0</div>
+      <div class="score-chip">5.5</div>
+      <div class="score-chip">7.0</div>
+      <div class="score-chip">6.5</div>
+      <div class="score-chip unknown">?</div>
+    </div>
+    <div class="question-block">
+      <h3>Part A</h3>
+      <p>Using the known final mean of 6.8, calculate the missing 7th score.</p>
+      <div class="answer-row">
+        <input type="number" id="p4a-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p4a', 7.1, 0.15)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p4a-hint')">hint</button>
+      </div>
+      <div id="p4a-hint" class="hint">Total = 6.8 × 7. Sum of 6 known = 40.5. Missing score = total − 40.5.</div>
+      <div class="feedback" id="p4a-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part B</h3>
+      <p>With all 7 scores now known, find the median. (Use your answer from Part A as approximately 7.1.)</p>
+      <div class="answer-row">
+        <input type="number" id="p4b-input" placeholder="answer" step="0.5">
+        <button class="check-btn" onclick="check('p4b', 7.0, 0.01)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p4b-hint')">hint</button>
+      </div>
+      <div id="p4b-hint" class="hint">Sort all 7: 5.5, 6.0, 6.5, 7.0, 7.1, 7.5, 8.0. The median is the 4th value.</div>
+      <div class="feedback" id="p4b-fb"></div>
+    </div>
+    <div class="question-block">
+      <h3>Part C — What-if analysis</h3>
+      <p>Judge 3 (who gave 8.0) later admitted they meant to enter 6.0 — a typo. How would correcting this change the mean? Would Remy have qualified with a mean cutoff of 7.0? How would the median change?</p>
+      <div class="answer-row">
+        <input type="number" id="p4c-input" placeholder="new mean" step="0.01">
+        <button class="check-btn" onclick="check('p4c', 6.51, 0.02)">Check</button>
+        <button class="hint-btn" onclick="toggleHint('p4c-hint')">hint</button>
+      </div>
+      <div id="p4c-hint" class="hint">New total = old total − 8.0 + 6.0. New mean = new total ÷ 7. New sorted list: 5.5, 6.0, 6.0, 6.5, 7.0, 7.1, 7.5 — what's the new median?</div>
+      <div class="feedback" id="p4c-fb"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(i) {
+  document.querySelectorAll('.problem').forEach((p,j) => p.classList.toggle('active', i===j));
+  document.querySelectorAll('.nav button').forEach((b,j) => b.classList.toggle('active', i===j));
+}
+function check(id, correct, tol) {
+  const val = parseFloat(document.getElementById(id+'-input').value);
+  const fb = document.getElementById(id+'-fb');
+  if (isNaN(val)) { fb.className='feedback wrong'; fb.textContent='Enter a number first.'; return; }
+  const pass = Math.abs(val - correct) <= (tol || 0.01);
+  fb.className = 'feedback ' + (pass ? 'correct' : 'wrong');
+  fb.textContent = pass
+    ? '✓ Correct! ' + getEncouragement()
+    : '✗ Not quite. Check your arithmetic and try again!';
+}
+function toggleHint(id) {
+  const h = document.getElementById(id);
+  h.style.display = h.style.display === 'block' ? 'none' : 'block';
+}
+function getEncouragement() {
+  const msgs = ['Nailed it!', 'The judges are impressed.', 'Perfect landing!', 'No splash at all!', 'Even the grudge judge would have to nod.'];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+</script>
+</body>
+</html>
